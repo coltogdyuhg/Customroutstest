@@ -88,6 +88,30 @@
         </div>
     </div>
 
+    <!-- Route Detail Popup (New) -->
+    <div id="route-popup" class="fixed bottom-10 left-1/2 -translate-x-1/2 w-[90%] max-w-sm z-[1500] hidden transition-all transform translate-y-full opacity-0">
+        <div class="bg-white dark:bg-slate-800 rounded-[2.5rem] p-6 shadow-2xl border border-slate-200 dark:border-slate-700">
+            <div class="flex flex-col items-center text-center space-y-4">
+                <div class="space-y-1">
+                    <h3 id="popup-name" class="text-sm font-black uppercase tracking-widest dark:text-white">Route Name</h3>
+                    <div class="flex items-center justify-center gap-3 text-indigo-600 dark:text-indigo-400 font-black italic text-lg">
+                        <span id="popup-dist">0.00 Mi</span>
+                        <span class="text-slate-300 dark:text-slate-600">|</span>
+                        <span id="popup-time">0 Min</span>
+                    </div>
+                </div>
+                <div class="flex w-full gap-2">
+                    <button id="start-route-btn" class="flex-grow bg-indigo-600 hover:bg-indigo-500 text-white py-4 rounded-2xl font-black uppercase text-xs tracking-widest transition-all">
+                        Start Route
+                    </button>
+                    <button onclick="hideRoutePopup()" class="bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-300 px-6 rounded-2xl">
+                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Route Name Modal -->
     <div id="name-modal" class="fixed inset-0 z-[1000] hidden flex items-center justify-center p-6 bg-slate-950/60 backdrop-blur-sm">
         <div class="bg-white dark:bg-slate-800 w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl space-y-6">
@@ -149,7 +173,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <button onclick="selectMode('desktop')" class="group p-8 bg-white/5 hover:bg-white/10 border border-white/10 rounded-[2.5rem] transition-all flex flex-col items-center gap-4">
                     <div class="p-4 bg-indigo-500 rounded-2xl text-white shadow-xl shadow-indigo-500/20 group-hover:scale-110 transition-transform">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2-2v10a2 2 0 002 2z" /></svg>
                     </div>
                     <h3 class="text-white font-black uppercase text-sm">Desktop Optimization</h3>
                 </button>
@@ -199,7 +223,7 @@
                         </div>
                     </div>
 
-                    <button id="new-route-btn" class="w-full bg-indigo-600 text-white py-4 rounded-2xl hover:bg-indigo-500 font-black uppercase tracking-widest text-xs">
+                    <button id="new-route-btn" class="w-full bg-indigo-600 text-white py-4 rounded-2xl hover:bg-indigo-500 font-black uppercase tracking-widest text-xs transition-colors">
                         + Draw Route
                     </button>
                     
@@ -265,7 +289,6 @@
         function calculateRemaining(currentPos, routePoints) {
             if (!currentPos || routePoints.length < 2) return 0;
             
-            // Basic logic: find nearest point on path, then sum distance to end
             let nearestIdx = 0;
             let minDist = Infinity;
             
@@ -290,16 +313,13 @@
             const r = savedRoutes.find(x => x.id === id);
             if (!r) return;
             
+            hideRoutePopup();
             currentDriveRoute = r;
             isDriving = true;
             document.getElementById('drive-hud').classList.remove('hidden');
             
-            // View route
             window.viewRoute(id);
-            
-            // Center on user
             if (lastKnownPos) map.flyTo(lastKnownPos, 18);
-            
             updateHUD();
         };
 
@@ -313,14 +333,42 @@
 
         function updateHUD() {
             if (!isDriving || !currentDriveRoute || !lastKnownPos) return;
-            
             const miles = calculateRemaining(lastKnownPos, currentDriveRoute.path);
             document.getElementById('hud-miles').innerText = miles.toFixed(2) + " Mi";
-            
-            // Estimated time (assuming 30mph avg for simple demo)
-            const hours = miles / 30;
-            const mins = Math.round(hours * 60);
+            const mins = Math.max(1, Math.round((miles / 30) * 60));
             document.getElementById('hud-time').innerText = mins + " Min";
+        }
+
+        // --- Route Selection Popup Logic ---
+        window.selectRoute = (id) => {
+            const r = savedRoutes.find(x => x.id === id);
+            if (!r) return;
+
+            // View on map
+            window.viewRoute(id);
+
+            // Populate and show popup
+            const popup = document.getElementById('route-popup');
+            document.getElementById('popup-name').innerText = r.name;
+            document.getElementById('popup-dist').innerText = `${r.distance} Mi`;
+            
+            const estMins = Math.max(1, Math.round((parseFloat(r.distance) / 30) * 60));
+            document.getElementById('popup-time').innerText = `${estMins} Min`;
+
+            document.getElementById('start-route-btn').onclick = () => window.enterDriveMode(id);
+
+            popup.classList.remove('hidden');
+            setTimeout(() => {
+                popup.classList.remove('translate-y-full', 'opacity-0');
+            }, 10);
+        };
+
+        function hideRoutePopup() {
+            const popup = document.getElementById('route-popup');
+            popup.classList.add('translate-y-full', 'opacity-0');
+            setTimeout(() => {
+                popup.classList.add('hidden');
+            }, 300);
         }
 
         // --- Theme & Setup ---
@@ -479,6 +527,7 @@
             document.getElementById('new-route-btn').classList.add('hidden');
             document.getElementById('active-controls').classList.remove('hidden');
             map.getContainer().style.cursor = 'crosshair';
+            hideRoutePopup();
         };
 
         document.getElementById('end-route-btn').onclick = () => {
@@ -527,15 +576,14 @@
                 return;
             }
             list.innerHTML = savedRoutes.map(route => `
-                <div class="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-4 rounded-2xl shadow-sm">
-                    <div class="flex justify-between items-center mb-2">
+                <div onclick="selectRoute(${route.id})" class="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-4 rounded-2xl shadow-sm cursor-pointer hover:border-indigo-300 transition-colors group">
+                    <div class="flex justify-between items-center">
                         <div class="truncate pr-2">
-                            <p class="text-[10px] font-black uppercase dark:text-white truncate">${route.name}</p>
+                            <p class="text-[10px] font-black uppercase dark:text-white truncate group-hover:text-indigo-600 transition-colors">${route.name}</p>
                             <p class="text-[8px] font-bold text-indigo-500 uppercase tracking-widest">${route.distance} Miles</p>
                         </div>
-                        <div class="flex gap-1">
-                             <button onclick="enterDriveMode(${route.id})" class="bg-indigo-600 text-white px-3 py-1.5 rounded-lg font-black text-[8px] uppercase">Drive</button>
-                             <button onclick="delRoute(${route.id})" class="text-rose-500 p-1.5">
+                        <div class="flex items-center gap-1">
+                             <button onclick="event.stopPropagation(); delRoute(${route.id})" class="text-slate-300 hover:text-rose-500 p-1.5 transition-colors">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                              </button>
                         </div>
@@ -556,10 +604,16 @@
         window.delRoute = (id) => {
             savedRoutes = savedRoutes.filter(x => x.id !== id);
             if(activeViewLine) map.removeLayer(activeViewLine);
+            hideRoutePopup();
             updateSavedList();
         };
 
-        const center = () => lastKnownPos && map.flyTo(lastKnownPos, 16);
+        const center = () => {
+            if(lastKnownPos) {
+                map.flyTo(lastKnownPos, 16);
+                hideRoutePopup();
+            }
+        };
         document.getElementById('locate-me-btn').onclick = center;
         document.getElementById('floating-locate').onclick = center;
     </script>
