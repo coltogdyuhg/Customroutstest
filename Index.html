@@ -66,9 +66,19 @@
         .leaflet-container { background: transparent !important; }
         .dark .leaflet-tile-pane { filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3); }
         .dark .leaflet-container { background: #0f172a !important; }
+
+        /* Toast notifications */
+        #toast {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background: #1e293b; color: white; padding: 12px 24px; border-radius: 12px;
+            font-size: 12px; font-weight: 800; text-transform: uppercase; z-index: 9999;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); display: none;
+        }
     </style>
 </head>
 <body class="bg-slate-50 dark:bg-slate-950 overflow-hidden font-sans text-slate-900 transition-colors duration-300">
+
+    <div id="toast"></div>
 
     <!-- Drive Mode HUD Overlay -->
     <div id="drive-hud" class="fixed top-20 left-1/2 -translate-x-1/2 w-[90%] max-w-lg z-[2000] hidden transition-all duration-500">
@@ -85,30 +95,6 @@
             <button onclick="exitDriveMode()" class="ml-4 bg-white/10 p-3 rounded-full hover:bg-rose-500 transition-colors">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
-        </div>
-    </div>
-
-    <!-- Route Detail Popup (New) -->
-    <div id="route-popup" class="fixed bottom-10 left-1/2 -translate-x-1/2 w-[90%] max-w-sm z-[1500] hidden transition-all transform translate-y-full opacity-0">
-        <div class="bg-white dark:bg-slate-800 rounded-[2.5rem] p-6 shadow-2xl border border-slate-200 dark:border-slate-700">
-            <div class="flex flex-col items-center text-center space-y-4">
-                <div class="space-y-1">
-                    <h3 id="popup-name" class="text-sm font-black uppercase tracking-widest dark:text-white">Route Name</h3>
-                    <div class="flex items-center justify-center gap-3 text-indigo-600 dark:text-indigo-400 font-black italic text-lg">
-                        <span id="popup-dist">0.00 Mi</span>
-                        <span class="text-slate-300 dark:text-slate-600">|</span>
-                        <span id="popup-time">0 Min</span>
-                    </div>
-                </div>
-                <div class="flex w-full gap-2">
-                    <button id="start-route-btn" class="flex-grow bg-indigo-600 hover:bg-indigo-500 text-white py-4 rounded-2xl font-black uppercase text-xs tracking-widest transition-all">
-                        Start Route
-                    </button>
-                    <button onclick="hideRoutePopup()" class="bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-300 px-6 rounded-2xl">
-                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                    </button>
-                </div>
-            </div>
         </div>
     </div>
 
@@ -144,7 +130,7 @@
                 </div>
             </div>
             <div class="pt-10 border-t border-slate-100 dark:border-slate-800 text-center">
-                <p class="text-[9px] text-slate-400 font-bold uppercase">CustomRoutes v2.2.0</p>
+                <p class="text-[9px] text-slate-400 font-bold uppercase">CustomRoutes v2.5.0 (Cloud)</p>
             </div>
         </div>
     </div>
@@ -158,7 +144,7 @@
                     <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                 </div>
                 <h2 class="text-3xl font-black text-white italic uppercase tracking-tighter">CustomRoutes</h2>
-                <p class="text-indigo-400 text-[10px] font-black uppercase tracking-[0.4em]" id="boot-label">System Initializing...</p>
+                <p class="text-indigo-400 text-[10px] font-black uppercase tracking-[0.4em]" id="boot-label">Initializing Cloud Database...</p>
             </div>
             <div class="relative w-full bg-white/5 h-1.5 rounded-full overflow-hidden border border-white/5">
                 <div id="boot-progress" class="h-full bg-indigo-500 w-0 transition-all duration-200 ease-out"></div>
@@ -223,7 +209,7 @@
                         </div>
                     </div>
 
-                    <button id="new-route-btn" class="w-full bg-indigo-600 text-white py-4 rounded-2xl hover:bg-indigo-500 font-black uppercase tracking-widest text-xs transition-colors">
+                    <button id="new-route-btn" class="w-full bg-indigo-600 text-white py-4 rounded-2xl hover:bg-indigo-500 font-black uppercase tracking-widest text-xs">
                         + Draw Route
                     </button>
                     
@@ -252,7 +238,7 @@
                     <h3 class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-4">Saved Paths</h3>
                     <div id="saved-routes-list" class="space-y-3">
                         <div class="text-center py-8 opacity-40">
-                            <p class="text-[10px] font-bold">No saved routes yet.</p>
+                            <p class="text-[10px] font-bold">Syncing with cloud...</p>
                         </div>
                     </div>
                 </div>
@@ -267,7 +253,19 @@
         </main>
     </div>
 
-    <script>
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, addDoc, onSnapshot, deleteDoc, query, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Firebase Configuration
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'custom-routes-v2';
+
         let map, polyline, markers = [], routePath = [];
         let isDrawing = false, userMarker = null;
         let savedRoutes = [];
@@ -275,110 +273,17 @@
         let activeViewLine = null;
         let isDriving = false;
         let currentDriveRoute = null;
+        let currentUser = null;
         let currentTheme = localStorage.getItem('theme') || 'light';
 
-        // --- Distance Logic ---
-        function calculateDistance(points) {
-            let total = 0;
-            for (let i = 0; i < points.length - 1; i++) {
-                total += L.latLng(points[i]).distanceTo(L.latLng(points[i+1]));
-            }
-            return (total * 0.000621371).toFixed(2); // Convert meters to miles
-        }
-
-        function calculateRemaining(currentPos, routePoints) {
-            if (!currentPos || routePoints.length < 2) return 0;
-            
-            let nearestIdx = 0;
-            let minDist = Infinity;
-            
-            routePoints.forEach((pt, idx) => {
-                const d = L.latLng(currentPos).distanceTo(L.latLng(pt));
-                if (d < minDist) {
-                    minDist = d;
-                    nearestIdx = idx;
-                }
-            });
-
-            let remainingMeters = L.latLng(currentPos).distanceTo(L.latLng(routePoints[nearestIdx]));
-            for (let i = nearestIdx; i < routePoints.length - 1; i++) {
-                remainingMeters += L.latLng(routePoints[i]).distanceTo(L.latLng(routePoints[i+1]));
-            }
-            
-            return (remainingMeters * 0.000621371);
-        }
-
-        // --- Drive Mode ---
-        window.enterDriveMode = (id) => {
-            const r = savedRoutes.find(x => x.id === id);
-            if (!r) return;
-            
-            hideRoutePopup();
-            currentDriveRoute = r;
-            isDriving = true;
-            document.getElementById('drive-hud').classList.remove('hidden');
-            
-            window.viewRoute(id);
-            if (lastKnownPos) map.flyTo(lastKnownPos, 18);
-            updateHUD();
-        };
-
-        function exitDriveMode() {
-            isDriving = false;
-            currentDriveRoute = null;
-            document.getElementById('drive-hud').classList.add('hidden');
-            if (activeViewLine) map.removeLayer(activeViewLine);
-            activeViewLine = null;
-        }
-
-        function updateHUD() {
-            if (!isDriving || !currentDriveRoute || !lastKnownPos) return;
-            const miles = calculateRemaining(lastKnownPos, currentDriveRoute.path);
-            document.getElementById('hud-miles').innerText = miles.toFixed(2) + " Mi";
-            const mins = Math.max(1, Math.round((miles / 30) * 60));
-            document.getElementById('hud-time').innerText = mins + " Min";
-        }
-
-        // --- Route Selection Popup Logic ---
-        window.selectRoute = (id) => {
-            const r = savedRoutes.find(x => x.id === id);
-            if (!r) return;
-
-            // View on map
-            window.viewRoute(id);
-
-            // Populate and show popup
-            const popup = document.getElementById('route-popup');
-            document.getElementById('popup-name').innerText = r.name;
-            document.getElementById('popup-dist').innerText = `${r.distance} Mi`;
-            
-            const estMins = Math.max(1, Math.round((parseFloat(r.distance) / 30) * 60));
-            document.getElementById('popup-time').innerText = `${estMins} Min`;
-
-            document.getElementById('start-route-btn').onclick = () => window.enterDriveMode(id);
-
-            popup.classList.remove('hidden');
-            setTimeout(() => {
-                popup.classList.remove('translate-y-full', 'opacity-0');
-            }, 10);
-        };
-
-        function hideRoutePopup() {
-            const popup = document.getElementById('route-popup');
-            popup.classList.add('translate-y-full', 'opacity-0');
-            setTimeout(() => {
-                popup.classList.add('hidden');
-            }, 300);
-        }
-
-        // --- Theme & Setup ---
-        function setTheme(theme) {
+        // --- Core logic functions attached to window for HTML accessibility ---
+        window.toggleSettings = () => document.getElementById('settings-panel').classList.toggle('translate-x-full');
+        window.setTheme = (theme) => {
             currentTheme = theme;
             localStorage.setItem('theme', theme);
             const html = document.documentElement;
             const lightBtn = document.getElementById('theme-light-btn');
             const darkBtn = document.getElementById('theme-dark-btn');
-
             if (theme === 'dark') {
                 html.classList.add('dark');
                 darkBtn.className = "py-3 rounded-xl text-[10px] font-black uppercase transition-all bg-indigo-600 text-white shadow-lg";
@@ -388,14 +293,104 @@
                 lightBtn.className = "py-3 rounded-xl text-[10px] font-black uppercase transition-all bg-white text-indigo-600 shadow-sm";
                 darkBtn.className = "py-3 rounded-xl text-[10px] font-black uppercase transition-all text-slate-400 dark:text-slate-500";
             }
-        }
-        setTheme(currentTheme);
+        };
 
-        function toggleSettings() {
-            document.getElementById('settings-panel').classList.toggle('translate-x-full');
+        const showToast = (msg) => {
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.style.display = 'block';
+            setTimeout(() => t.style.display = 'none', 3000);
+        };
+
+        // --- Firebase Initialisation ---
+        const initAuth = async () => {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (err) {
+                console.error("Auth failed:", err);
+            }
+        };
+
+        onAuthStateChanged(auth, (user) => {
+            currentUser = user;
+            if (user) {
+                setupRouteListener();
+            }
+        });
+
+        const setupRouteListener = () => {
+            if (!currentUser) return;
+            // RULE 1: Specific path structure
+            const routesCol = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'routes');
+            
+            // Note: We avoid complex orderBy queries as per Rule 2 to avoid index errors
+            onSnapshot(routesCol, (snapshot) => {
+                savedRoutes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                // Sort by timestamp in memory to satisfy Rule 2
+                savedRoutes.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+                updateSavedList();
+            }, (err) => {
+                console.error("Firestore sync error:", err);
+            });
+        };
+
+        // --- Distance Logic ---
+        function calculateDistance(points) {
+            let total = 0;
+            for (let i = 0; i < points.length - 1; i++) {
+                total += L.latLng(points[i]).distanceTo(L.latLng(points[i+1]));
+            }
+            return (total * 0.000621371).toFixed(2); // meters to miles
         }
 
-        window.onload = () => {
+        function calculateRemaining(currentPos, routePoints) {
+            if (!currentPos || routePoints.length < 2) return 0;
+            let nearestIdx = 0;
+            let minDist = Infinity;
+            routePoints.forEach((pt, idx) => {
+                const d = L.latLng(currentPos).distanceTo(L.latLng(pt));
+                if (d < minDist) { minDist = d; nearestIdx = idx; }
+            });
+            let remainingMeters = L.latLng(currentPos).distanceTo(L.latLng(routePoints[nearestIdx]));
+            for (let i = nearestIdx; i < routePoints.length - 1; i++) {
+                remainingMeters += L.latLng(routePoints[i]).distanceTo(L.latLng(routePoints[i+1]));
+            }
+            return (remainingMeters * 0.000621371);
+        }
+
+        // --- UI Interactions ---
+        window.enterDriveMode = (id) => {
+            const r = savedRoutes.find(x => x.id === id);
+            if (!r) return;
+            currentDriveRoute = r;
+            isDriving = true;
+            document.getElementById('drive-hud').classList.remove('hidden');
+            window.viewRoute(id);
+            if (lastKnownPos) map.flyTo(lastKnownPos, 18);
+            updateHUD();
+        };
+
+        window.exitDriveMode = () => {
+            isDriving = false;
+            currentDriveRoute = null;
+            document.getElementById('drive-hud').classList.add('hidden');
+            if (activeViewLine) map.removeLayer(activeViewLine);
+            activeViewLine = null;
+        };
+
+        function updateHUD() {
+            if (!isDriving || !currentDriveRoute || !lastKnownPos) return;
+            const miles = calculateRemaining(lastKnownPos, currentDriveRoute.path);
+            document.getElementById('hud-miles').innerText = miles.toFixed(2) + " Mi";
+            const mins = Math.round((miles / 30) * 60);
+            document.getElementById('hud-time').innerText = mins + " Min";
+        }
+
+        const startBoot = () => {
             let prog = 0;
             const bar = document.getElementById('boot-progress');
             const interval = setInterval(() => {
@@ -409,7 +404,7 @@
             }, 100);
         };
 
-        function showSelection() {
+        const showSelection = () => {
             const boot = document.getElementById('boot-screen');
             const selection = document.getElementById('selection-screen');
             boot.classList.add('opacity-0', 'pointer-events-none');
@@ -418,13 +413,12 @@
                 selection.classList.remove('hidden');
                 setTimeout(() => selection.classList.remove('opacity-0'), 50);
             }, 700);
-        }
+        };
 
-        function selectMode(mode) {
+        window.selectMode = (mode) => {
             const selection = document.getElementById('selection-screen');
             const loader = document.getElementById('loading-screen');
             selection.classList.add('opacity-0', 'pointer-events-none');
-            
             setTimeout(() => {
                 selection.classList.add('hidden');
                 loader.classList.remove('hidden');
@@ -432,9 +426,9 @@
                 setTimeout(() => loader.classList.remove('opacity-0'), 50);
                 startMapLoading(mode);
             }, 500);
-        }
+        };
 
-        function startMapLoading(mode) {
+        const startMapLoading = (mode) => {
             let prog = 0;
             const bar = document.getElementById('progress-bar');
             const interval = setInterval(() => {
@@ -445,18 +439,18 @@
                     finishLoading(mode);
                 }
             }, 50);
-        }
+        };
 
-        function finishLoading(mode) {
+        const finishLoading = (mode) => {
             const loader = document.getElementById('loading-screen');
-            const app = document.getElementById('app-interface');
+            const appUi = document.getElementById('app-interface');
             loader.classList.add('opacity-0', 'pointer-events-none');
             setTimeout(() => {
                 loader.classList.add('hidden');
-                app.classList.remove('opacity-0', 'pointer-events-none');
+                appUi.classList.remove('opacity-0', 'pointer-events-none');
                 initMap(mode);
             }, 500);
-        }
+        };
 
         function initMap(mode) {
             const fallback = [40.7128, -74.0060];
@@ -482,13 +476,21 @@
                 navigator.geolocation.watchPosition(
                     (pos) => {
                         const latlng = [pos.coords.latitude, pos.coords.longitude];
-                        updateLocation(latlng);
+                        lastKnownPos = latlng;
+                        if(userMarker) userMarker.setLatLng(latlng);
+                        document.getElementById('tracking-status').className = 'w-2 h-2 rounded-full bg-emerald-400';
+                        document.getElementById('gps-label').innerText = "Connected";
+                        document.getElementById('manual-loc-entry').classList.add('hidden');
                         if (isDriving) {
                             map.panTo(latlng);
                             updateHUD();
                         }
                     },
-                    () => handleGPSBlocked(),
+                    () => {
+                        document.getElementById('tracking-status').className = 'w-2 h-2 rounded-full bg-rose-500';
+                        document.getElementById('gps-label').innerText = "Blocked";
+                        document.getElementById('manual-loc-entry').classList.remove('hidden');
+                    },
                     { enableHighAccuracy: true }
                 );
             }
@@ -500,34 +502,17 @@
                 polyline.setLatLngs(routePath);
                 const m = L.circleMarker(pt, { radius: 5, fillColor: '#4f46e5', color: '#fff', weight: 2, fillOpacity: 1 }).addTo(map);
                 markers.push(m);
-                
                 const dist = calculateDistance(routePath);
                 document.getElementById('point-count').innerText = `${dist} Mi Total`;
             });
         }
 
-        function updateLocation(latlng) {
-            lastKnownPos = latlng;
-            if(userMarker) userMarker.setLatLng(latlng);
-            document.getElementById('tracking-status').className = 'w-2 h-2 rounded-full bg-emerald-400';
-            document.getElementById('gps-label').innerText = "Connected";
-            document.getElementById('manual-loc-entry').classList.add('hidden');
-        }
-
-        function handleGPSBlocked() {
-            document.getElementById('tracking-status').className = 'w-2 h-2 rounded-full bg-rose-500';
-            document.getElementById('gps-label').innerText = "Blocked";
-            document.getElementById('manual-loc-entry').classList.remove('hidden');
-        }
-
-        // --- Interaction Logic ---
         document.getElementById('new-route-btn').onclick = () => {
             resetCurrentDrawing();
             isDrawing = true;
             document.getElementById('new-route-btn').classList.add('hidden');
             document.getElementById('active-controls').classList.remove('hidden');
             map.getContainer().style.cursor = 'crosshair';
-            hideRoutePopup();
         };
 
         document.getElementById('end-route-btn').onclick = () => {
@@ -538,11 +523,32 @@
             document.getElementById('route-name-input').focus();
         };
 
-        document.getElementById('confirm-save-btn').onclick = () => {
-            const name = document.getElementById('route-name-input').value.trim() || `Path ${Date.now()}`;
-            saveRoute(name);
-            document.getElementById('name-modal').classList.add('hidden');
-            resetCurrentDrawing();
+        document.getElementById('confirm-save-btn').onclick = async () => {
+            const nameInput = document.getElementById('route-name-input');
+            const name = nameInput.value.trim() || `Path ${new Date().toLocaleTimeString()}`;
+            
+            if (!currentUser) {
+                showToast("Not signed in. Wait a moment...");
+                return;
+            }
+
+            try {
+                const dist = calculateDistance(routePath);
+                const routesCol = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'routes');
+                await addDoc(routesCol, {
+                    name: name,
+                    distance: dist,
+                    path: routePath, // Serialised as array of [lat, lng]
+                    createdAt: Date.now()
+                });
+                showToast("Route saved to cloud!");
+                document.getElementById('name-modal').classList.add('hidden');
+                nameInput.value = "";
+                resetCurrentDrawing();
+            } catch (err) {
+                console.error("Save failed:", err);
+                showToast("Error saving route.");
+            }
         };
 
         document.getElementById('close-modal-btn').onclick = () => document.getElementById('name-modal').classList.add('hidden');
@@ -562,13 +568,6 @@
             activeViewLine = null;
         }
 
-        function saveRoute(name) {
-            const dist = calculateDistance(routePath);
-            const routeObj = { id: Date.now(), name: name, distance: dist, path: [...routePath] };
-            savedRoutes.unshift(routeObj);
-            updateSavedList();
-        }
-
         function updateSavedList() {
             const list = document.getElementById('saved-routes-list');
             if(savedRoutes.length === 0) {
@@ -576,14 +575,15 @@
                 return;
             }
             list.innerHTML = savedRoutes.map(route => `
-                <div onclick="selectRoute(${route.id})" class="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-4 rounded-2xl shadow-sm cursor-pointer hover:border-indigo-300 transition-colors group">
-                    <div class="flex justify-between items-center">
-                        <div class="truncate pr-2">
-                            <p class="text-[10px] font-black uppercase dark:text-white truncate group-hover:text-indigo-600 transition-colors">${route.name}</p>
+                <div class="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-4 rounded-2xl shadow-sm">
+                    <div class="flex justify-between items-center mb-2">
+                        <div class="truncate pr-2 cursor-pointer" onclick="viewRoute('${route.id}')">
+                            <p class="text-[10px] font-black uppercase dark:text-white truncate">${route.name}</p>
                             <p class="text-[8px] font-bold text-indigo-500 uppercase tracking-widest">${route.distance} Miles</p>
                         </div>
-                        <div class="flex items-center gap-1">
-                             <button onclick="event.stopPropagation(); delRoute(${route.id})" class="text-slate-300 hover:text-rose-500 p-1.5 transition-colors">
+                        <div class="flex gap-1">
+                             <button onclick="enterDriveMode('${route.id}')" class="bg-indigo-600 text-white px-3 py-1.5 rounded-lg font-black text-[8px] uppercase">Drive</button>
+                             <button onclick="delRoute('${route.id}')" class="text-rose-500 p-1.5">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                              </button>
                         </div>
@@ -601,21 +601,26 @@
             }
         };
 
-        window.delRoute = (id) => {
-            savedRoutes = savedRoutes.filter(x => x.id !== id);
-            if(activeViewLine) map.removeLayer(activeViewLine);
-            hideRoutePopup();
-            updateSavedList();
-        };
-
-        const center = () => {
-            if(lastKnownPos) {
-                map.flyTo(lastKnownPos, 16);
-                hideRoutePopup();
+        window.delRoute = async (id) => {
+            if (!currentUser) return;
+            try {
+                const routeDoc = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'routes', id);
+                await deleteDoc(routeDoc);
+                if(activeViewLine) map.removeLayer(activeViewLine);
+                showToast("Route deleted");
+            } catch (err) {
+                console.error("Delete failed:", err);
             }
         };
+
+        const center = () => lastKnownPos && map.flyTo(lastKnownPos, 16);
         document.getElementById('locate-me-btn').onclick = center;
         document.getElementById('floating-locate').onclick = center;
+
+        // Startup
+        setTheme(currentTheme);
+        initAuth();
+        startBoot();
     </script>
 </body>
 </html>
