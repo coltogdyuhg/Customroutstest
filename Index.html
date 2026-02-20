@@ -64,8 +64,7 @@
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
 
         .leaflet-container { background: transparent !important; }
-        /* Only apply dark filter to standard tiles, not satellite */
-        .dark .leaflet-tile-pane.standard-tiles { filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3); }
+        .dark .leaflet-tile-pane { filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3); }
         .dark .leaflet-container { background: #0f172a !important; }
     </style>
 </head>
@@ -120,17 +119,8 @@
                     <button onclick="setTheme('dark')" id="theme-dark-btn" class="py-3 rounded-xl text-[10px] font-black uppercase transition-all">Dark</button>
                 </div>
             </div>
-
-            <div class="space-y-4">
-                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Map View</label>
-                <div class="grid grid-cols-2 gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl">
-                    <button onclick="setMapLayer('standard')" id="map-standard-btn" class="py-3 rounded-xl text-[10px] font-black uppercase transition-all bg-indigo-600 text-white">Standard</button>
-                    <button onclick="setMapLayer('satellite')" id="map-satellite-btn" class="py-3 rounded-xl text-[10px] font-black uppercase transition-all text-slate-400">Satellite</button>
-                </div>
-            </div>
-
             <div class="pt-10 border-t border-slate-100 dark:border-slate-800 text-center">
-                <p class="text-[9px] text-slate-400 font-bold uppercase">CustomRoutes v2.3.0</p>
+                <p class="text-[9px] text-slate-400 font-bold uppercase">CustomRoutes v2.2.0</p>
             </div>
         </div>
     </div>
@@ -262,13 +252,6 @@
         let isDriving = false;
         let currentDriveRoute = null;
         let currentTheme = localStorage.getItem('theme') || 'light';
-        let currentLayerType = 'standard';
-
-        // Map Tile Layers
-        const standardTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-            className: 'standard-tiles'
-        });
-        const satelliteTiles = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
 
         // --- Distance Logic ---
         function calculateDistance(points) {
@@ -282,6 +265,7 @@
         function calculateRemaining(currentPos, routePoints) {
             if (!currentPos || routePoints.length < 2) return 0;
             
+            // Basic logic: find nearest point on path, then sum distance to end
             let nearestIdx = 0;
             let minDist = Infinity;
             
@@ -310,8 +294,12 @@
             isDriving = true;
             document.getElementById('drive-hud').classList.remove('hidden');
             
+            // View route
             window.viewRoute(id);
+            
+            // Center on user
             if (lastKnownPos) map.flyTo(lastKnownPos, 18);
+            
             updateHUD();
         };
 
@@ -332,10 +320,10 @@
             // Estimated time (assuming 30mph avg for simple demo)
             const hours = miles / 30;
             const mins = Math.round(hours * 60);
-            document.getElementById('hud-time').innerText = (mins || 1) + " Min";
+            document.getElementById('hud-time').innerText = mins + " Min";
         }
 
-        // --- Theme & Map Settings ---
+        // --- Theme & Setup ---
         function setTheme(theme) {
             currentTheme = theme;
             localStorage.setItem('theme', theme);
@@ -353,25 +341,6 @@
                 darkBtn.className = "py-3 rounded-xl text-[10px] font-black uppercase transition-all text-slate-400 dark:text-slate-500";
             }
         }
-
-        function setMapLayer(type) {
-            currentLayerType = type;
-            const standardBtn = document.getElementById('map-standard-btn');
-            const satelliteBtn = document.getElementById('map-satellite-btn');
-
-            if (type === 'satellite') {
-                map.removeLayer(standardTiles);
-                satelliteTiles.addTo(map);
-                satelliteBtn.className = "py-3 rounded-xl text-[10px] font-black uppercase transition-all bg-indigo-600 text-white shadow-lg";
-                standardBtn.className = "py-3 rounded-xl text-[10px] font-black uppercase transition-all text-slate-400";
-            } else {
-                map.removeLayer(satelliteTiles);
-                standardTiles.addTo(map);
-                standardBtn.className = "py-3 rounded-xl text-[10px] font-black uppercase transition-all bg-white text-indigo-600 shadow-sm";
-                satelliteBtn.className = "py-3 rounded-xl text-[10px] font-black uppercase transition-all text-slate-400";
-            }
-        }
-
         setTheme(currentTheme);
 
         function toggleSettings() {
@@ -449,7 +418,7 @@
                 tap: true
             }).setView(fallback, 13);
 
-            standardTiles.addTo(map);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(map);
             polyline = L.polyline([], { color: '#6366f1', weight: 4, dashArray: '5, 10' }).addTo(map);
             
             const customIcon = L.divIcon({
