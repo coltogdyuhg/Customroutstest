@@ -28,11 +28,19 @@
         :root { --header-h: 64px; }
         #map { height: calc(100vh - var(--header-h)); width: 100%; background: #0f172a; z-index: 1; }
         
+        /* Mobile Sidebar Styles */
         .mode-mobile #sidebar {
             position: fixed; bottom: 0; left: 0; width: 100% !important;
-            height: auto !important; max-height: 50vh; border-radius: 2rem 2rem 0 0;
+            height: auto !important; 
             z-index: 50;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 2rem 2rem 0 0;
         }
+
+        .mode-mobile #sidebar.is-collapsed {
+            transform: translateY(calc(100% - 70px));
+        }
+
         .mode-desktop #sidebar { width: 22rem; height: 100%; }
 
         .gradient-header { background: linear-gradient(90deg, #4f46e5 0%, #7c3aed 50%, #db2777 100%); }
@@ -66,6 +74,10 @@
         .leaflet-container { background: transparent !important; }
         .dark .leaflet-tile-pane { filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3); }
         .dark .leaflet-container { background: #0f172a !important; }
+
+        /* Hide handle on desktop */
+        #mobile-drag-handle { display: none; }
+        .mode-mobile #mobile-drag-handle { display: flex; }
     </style>
 </head>
 <body class="bg-slate-50 dark:bg-slate-950 overflow-hidden font-sans text-slate-900 transition-colors duration-300">
@@ -189,46 +201,54 @@
         </header>
 
         <main id="main-container" class="flex flex-grow overflow-hidden relative">
-            <div id="sidebar" class="bg-white dark:bg-slate-900 shadow-2xl flex flex-col z-20 overflow-y-auto border-r border-slate-100 dark:border-slate-800">
-                <div class="p-5 space-y-4 border-b border-slate-100 dark:border-slate-800">
-                    <div id="manual-loc-entry" class="hidden space-y-2">
-                        <label class="text-[9px] font-black text-rose-500 uppercase tracking-widest">GPS Access Blocked</label>
-                        <div class="flex gap-2">
-                            <input id="manual-search" type="text" placeholder="Search City" class="flex-grow p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-[10px] font-bold dark:text-white">
-                            <button id="manual-search-btn" class="px-4 bg-indigo-600 text-white rounded-xl text-[9px] font-black uppercase">Find</button>
-                        </div>
-                    </div>
-
-                    <button id="new-route-btn" class="w-full bg-indigo-600 text-white py-4 rounded-2xl hover:bg-indigo-500 font-black uppercase tracking-widest text-xs">
-                        + Draw Route
-                    </button>
-                    
-                    <div id="active-controls" class="hidden space-y-2">
-                        <div class="bg-indigo-50 dark:bg-slate-800 border-2 border-indigo-100 dark:border-indigo-900/30 p-4 rounded-2xl flex flex-col gap-3">
-                            <div class="flex justify-between items-center">
-                                <span id="point-count" class="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase">0.00 Mi Total</span>
-                            </div>
-                            <div class="grid grid-cols-2 gap-2">
-                                <button id="end-route-btn" class="bg-emerald-500 text-white py-3 rounded-xl font-black text-[10px] uppercase">Save</button>
-                                <button id="cancel-draft-btn" class="bg-white dark:bg-slate-700 text-rose-500 dark:text-rose-400 py-3 rounded-xl font-black text-[10px] uppercase border border-rose-100 dark:border-none">Cancel</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 p-3 rounded-xl flex items-center justify-between">
-                        <div class="flex items-center gap-3">
-                            <div id="tracking-status" class="w-2 h-2 rounded-full bg-slate-300"></div>
-                            <span id="gps-label" class="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase">Standby</span>
-                        </div>
-                        <button id="locate-me-btn" class="text-indigo-600 dark:text-indigo-400 font-black text-[9px] uppercase hover:underline">Recenter</button>
+            <div id="sidebar" class="bg-white dark:bg-slate-900 shadow-2xl flex flex-col z-20 border-r border-slate-100 dark:border-slate-800">
+                <!-- Mobile Drag/Toggle Handle -->
+                <div id="mobile-drag-handle" onclick="toggleSidebarCollapse()" class="flex flex-col items-center justify-center py-2 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 cursor-pointer">
+                    <div id="sidebar-chevron" class="transition-transform duration-300 transform rotate-0">
+                        <svg class="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                     </div>
                 </div>
 
-                <div class="p-5 flex-grow">
-                    <h3 class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-4">Saved Paths</h3>
-                    <div id="saved-routes-list" class="space-y-3">
-                        <div class="text-center py-8 opacity-40">
-                            <p class="text-[10px] font-bold">No saved routes yet.</p>
+                <!-- Sidebar Content -->
+                <div id="sidebar-scrollable" class="overflow-y-auto flex-grow h-[45vh] md:h-auto">
+                    <div class="p-5 space-y-4 border-b border-slate-100 dark:border-slate-800">
+                        <div id="manual-loc-entry" class="hidden space-y-2">
+                            <label class="text-[9px] font-black text-rose-500 uppercase tracking-widest">GPS Access Blocked</label>
+                            <div class="flex gap-2">
+                                <input id="manual-search" type="text" placeholder="Search City" class="flex-grow p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-[10px] font-bold dark:text-white">
+                                <button id="manual-search-btn" class="px-4 bg-indigo-600 text-white rounded-xl text-[9px] font-black uppercase">Find</button>
+                            </div>
+                        </div>
+
+                        <button id="new-route-btn" class="w-full bg-indigo-600 text-white py-4 rounded-2xl hover:bg-indigo-500 font-black uppercase tracking-widest text-xs">
+                            + Draw Route
+                        </button>
+                        
+                        <div id="active-controls" class="hidden space-y-2">
+                            <div class="bg-indigo-50 dark:bg-slate-800 border-2 border-indigo-100 dark:border-indigo-900/30 p-4 rounded-2xl flex flex-col gap-3">
+                                <div class="flex justify-between items-center">
+                                    <span id="point-count" class="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase">0.00 Mi Total</span>
+                                </div>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <button id="end-route-btn" class="bg-emerald-500 text-white py-3 rounded-xl font-black text-[10px] uppercase">Save</button>
+                                    <button id="cancel-draft-btn" class="bg-white dark:bg-slate-700 text-rose-500 dark:text-rose-400 py-3 rounded-xl font-black text-[10px] uppercase border border-rose-100 dark:border-none">Cancel</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 p-3 rounded-xl flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div id="tracking-status" class="w-2 h-2 rounded-full bg-slate-300"></div>
+                                <span id="gps-label" class="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase">Standby</span>
+                            </div>
+                            <button id="locate-me-btn" onclick="recenter()" class="text-indigo-600 dark:text-indigo-400 font-black text-[9px] uppercase hover:underline">Recenter</button>
+                        </div>
+                    </div>
+
+                    <div class="p-5 pb-20">
+                        <h3 class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-4">Saved Paths</h3>
+                        <div id="saved-routes-list" class="space-y-3">
+                            <!-- Populated via JS -->
                         </div>
                     </div>
                 </div>
@@ -236,7 +256,7 @@
 
             <div id="map-area" class="flex-grow relative">
                 <div id="map"></div>
-                <button id="floating-locate" class="absolute bottom-6 right-6 md:hidden z-[1000] bg-white dark:bg-slate-800 w-14 h-14 rounded-full shadow-2xl border border-slate-200 dark:border-slate-700 text-indigo-600 flex items-center justify-center">
+                <button onclick="recenter()" id="floating-locate" class="absolute bottom-6 right-6 md:hidden z-[1000] bg-white dark:bg-slate-800 w-14 h-14 rounded-full shadow-2xl border border-slate-200 dark:border-slate-700 text-indigo-600 flex items-center justify-center">
                     <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path></svg>
                 </button>
             </div>
@@ -246,12 +266,26 @@
     <script>
         let map, polyline, markers = [], routePath = [];
         let isDrawing = false, userMarker = null;
-        let savedRoutes = [];
+        let savedRoutes = JSON.parse(localStorage.getItem('saved_routes')) || [];
         let lastKnownPos = null;
         let activeViewLine = null;
         let isDriving = false;
         let currentDriveRoute = null;
         let currentTheme = localStorage.getItem('theme') || 'light';
+        let currentMode = 'desktop';
+
+        // --- Sidebar Logic ---
+        function toggleSidebarCollapse() {
+            const sidebar = document.getElementById('sidebar');
+            const chevron = document.getElementById('sidebar-chevron');
+            sidebar.classList.toggle('is-collapsed');
+            
+            if (sidebar.classList.contains('is-collapsed')) {
+                chevron.style.transform = 'rotate(180deg)';
+            } else {
+                chevron.style.transform = 'rotate(0deg)';
+            }
+        }
 
         // --- Distance Logic ---
         function calculateDistance(points) {
@@ -265,7 +299,6 @@
         function calculateRemaining(currentPos, routePoints) {
             if (!currentPos || routePoints.length < 2) return 0;
             
-            // Basic logic: find nearest point on path, then sum distance to end
             let nearestIdx = 0;
             let minDist = Infinity;
             
@@ -300,6 +333,14 @@
             // Center on user
             if (lastKnownPos) map.flyTo(lastKnownPos, 18);
             
+            // Collapse sidebar automatically when starting drive
+            if (currentMode === 'mobile') {
+                const sidebar = document.getElementById('sidebar');
+                if (!sidebar.classList.contains('is-collapsed')) {
+                    toggleSidebarCollapse();
+                }
+            }
+
             updateHUD();
         };
 
@@ -317,7 +358,7 @@
             const miles = calculateRemaining(lastKnownPos, currentDriveRoute.path);
             document.getElementById('hud-miles').innerText = miles.toFixed(2) + " Mi";
             
-            // Estimated time (assuming 30mph avg for simple demo)
+            // Assume 30mph speed
             const hours = miles / 30;
             const mins = Math.round(hours * 60);
             document.getElementById('hud-time').innerText = mins + " Min";
@@ -347,6 +388,7 @@
             document.getElementById('settings-panel').classList.toggle('translate-x-full');
         }
 
+        // Boot Loader Animation
         window.onload = () => {
             let prog = 0;
             const bar = document.getElementById('boot-progress');
@@ -356,7 +398,7 @@
                 bar.style.width = prog + '%';
                 if(prog >= 100) {
                     clearInterval(interval);
-                    showSelection();
+                    setTimeout(showSelection, 300);
                 }
             }, 100);
         };
@@ -373,6 +415,7 @@
         }
 
         function selectMode(mode) {
+            currentMode = mode;
             const selection = document.getElementById('selection-screen');
             const loader = document.getElementById('loading-screen');
             selection.classList.add('opacity-0', 'pointer-events-none');
@@ -407,6 +450,7 @@
                 loader.classList.add('hidden');
                 app.classList.remove('opacity-0', 'pointer-events-none');
                 initMap(mode);
+                updateSavedList();
             }, 500);
         }
 
@@ -458,6 +502,10 @@
             });
         }
 
+        function recenter() {
+            if (lastKnownPos) map.flyTo(lastKnownPos, 16);
+        }
+
         function updateLocation(latlng) {
             lastKnownPos = latlng;
             if(userMarker) userMarker.setLatLng(latlng);
@@ -479,6 +527,13 @@
             document.getElementById('new-route-btn').classList.add('hidden');
             document.getElementById('active-controls').classList.remove('hidden');
             map.getContainer().style.cursor = 'crosshair';
+            
+            if (currentMode === 'mobile') {
+                const sidebar = document.getElementById('sidebar');
+                if (sidebar.classList.contains('is-collapsed')) {
+                    toggleSidebarCollapse();
+                }
+            }
         };
 
         document.getElementById('end-route-btn').onclick = () => {
@@ -517,51 +572,49 @@
             const dist = calculateDistance(routePath);
             const routeObj = { id: Date.now(), name: name, distance: dist, path: [...routePath] };
             savedRoutes.unshift(routeObj);
+            localStorage.setItem('saved_routes', JSON.stringify(savedRoutes));
             updateSavedList();
+        }
+
+        function deleteRoute(id) {
+            savedRoutes = savedRoutes.filter(r => r.id !== id);
+            localStorage.setItem('saved_routes', JSON.stringify(savedRoutes));
+            updateSavedList();
+            if (activeViewLine) map.removeLayer(activeViewLine);
+        }
+
+        window.viewRoute = (id) => {
+            const r = savedRoutes.find(x => x.id === id);
+            if (!r) return;
+            if (activeViewLine) map.removeLayer(activeViewLine);
+            activeViewLine = L.polyline(r.path, { color: '#db2777', weight: 5 }).addTo(map);
+            map.fitBounds(activeViewLine.getBounds(), { padding: [50, 50] });
         }
 
         function updateSavedList() {
             const list = document.getElementById('saved-routes-list');
             if(savedRoutes.length === 0) {
-                list.innerHTML = '<div class="text-center py-8 opacity-40 text-[10px] font-bold">No saved routes.</div>';
+                list.innerHTML = '<div class="text-center py-8 opacity-40 text-[10px] font-bold dark:text-white">No saved routes.</div>';
                 return;
             }
             list.innerHTML = savedRoutes.map(route => `
-                <div class="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-4 rounded-2xl shadow-sm">
-                    <div class="flex justify-between items-center mb-2">
-                        <div class="truncate pr-2">
-                            <p class="text-[10px] font-black uppercase dark:text-white truncate">${route.name}</p>
-                            <p class="text-[8px] font-bold text-indigo-500 uppercase tracking-widest">${route.distance} Miles</p>
+                <div class="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-4 rounded-2xl shadow-sm space-y-3">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h4 class="text-[11px] font-black uppercase dark:text-white">${route.name}</h4>
+                            <p class="text-[9px] font-bold text-indigo-500">${route.distance} Miles</p>
                         </div>
-                        <div class="flex gap-1">
-                             <button onclick="enterDriveMode(${route.id})" class="bg-indigo-600 text-white px-3 py-1.5 rounded-lg font-black text-[8px] uppercase">Drive</button>
-                             <button onclick="delRoute(${route.id})" class="text-rose-500 p-1.5">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                             </button>
-                        </div>
+                        <button onclick="deleteRoute(${route.id})" class="text-slate-300 hover:text-rose-500 p-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="viewRoute(${route.id})" class="bg-slate-50 dark:bg-slate-700 py-2 rounded-lg text-[9px] font-black uppercase dark:text-white">Preview</button>
+                        <button onclick="enterDriveMode(${route.id})" class="bg-indigo-600 text-white py-2 rounded-lg text-[9px] font-black uppercase">Drive</button>
                     </div>
                 </div>
             `).join('');
         }
-
-        window.viewRoute = (id) => {
-            const r = savedRoutes.find(x => x.id === id);
-            if(r) {
-                if(activeViewLine) map.removeLayer(activeViewLine);
-                activeViewLine = L.polyline(r.path, { color: '#4338ca', weight: 6 }).addTo(map);
-                map.fitBounds(activeViewLine.getBounds(), { padding: [40, 40] });
-            }
-        };
-
-        window.delRoute = (id) => {
-            savedRoutes = savedRoutes.filter(x => x.id !== id);
-            if(activeViewLine) map.removeLayer(activeViewLine);
-            updateSavedList();
-        };
-
-        const center = () => lastKnownPos && map.flyTo(lastKnownPos, 16);
-        document.getElementById('locate-me-btn').onclick = center;
-        document.getElementById('floating-locate').onclick = center;
     </script>
 </body>
 </html>
