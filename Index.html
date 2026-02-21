@@ -81,33 +81,36 @@
 </head>
 <body class="bg-slate-50 dark:bg-slate-950 overflow-hidden font-sans text-slate-900 transition-colors duration-300">
 
-    <!-- Drive Mode HUD Overlay - Updated to be Smaller & Top Right -->
-    <div id="drive-hud" class="fixed top-20 right-4 z-[2000] hidden transition-all duration-500 scale-90 origin-top-right">
-        <div class="bg-slate-900/90 text-white rounded-3xl p-4 shadow-2xl flex items-center gap-4 border border-white/10 backdrop-blur-md">
-            <div class="flex flex-col border-r border-white/10 pr-4">
-                <span class="text-[8px] font-black uppercase tracking-widest text-indigo-400">Distance</span>
-                <span id="hud-miles" class="text-lg font-black italic tabular-nums">0.00 Mi</span>
+    <!-- Compact Drive HUD - Top Right Corner -->
+    <div id="drive-hud" class="fixed top-20 right-4 z-[2000] hidden transition-all duration-300">
+        <div class="bg-indigo-600/90 dark:bg-indigo-900/90 text-white rounded-2xl p-4 shadow-2xl flex flex-col gap-2 border border-white/20 backdrop-blur-md w-40">
+            <div class="flex items-center justify-between border-b border-white/10 pb-2 mb-1">
+                <span class="text-[9px] font-black uppercase tracking-widest opacity-80 italic">Driving</span>
+                <button onclick="exitDriveMode()" class="bg-white/10 p-1.5 rounded-lg hover:bg-rose-500 transition-colors">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
             </div>
-            <div class="flex flex-col">
-                <span class="text-[8px] font-black uppercase tracking-widest text-indigo-400">Est. Time</span>
-                <span id="hud-time" class="text-lg font-black italic tabular-nums">-- min</span>
+            <div>
+                <p class="text-[8px] font-black uppercase tracking-tighter opacity-60">Distance</p>
+                <h2 id="hud-miles" class="text-xl font-black italic">0.00 Mi</h2>
             </div>
-            <button onclick="exitDriveMode()" class="bg-rose-500/20 text-rose-500 p-2 rounded-xl hover:bg-rose-500 hover:text-white transition-all">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-            </button>
+            <div>
+                <p class="text-[8px] font-black uppercase tracking-tighter opacity-60">Est. Time</p>
+                <h2 id="hud-time" class="text-xl font-black italic">--:--</h2>
+            </div>
         </div>
     </div>
 
     <!-- Route Name Modal -->
     <div id="name-modal" class="fixed inset-0 z-[1000] hidden flex items-center justify-center p-6 bg-slate-950/60 backdrop-blur-sm">
-        <div class="bg-white dark:bg-slate-800 w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl space-y-6 border border-slate-200 dark:border-slate-700">
+        <div class="bg-white dark:bg-slate-800 w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl space-y-6">
             <div class="space-y-2">
                 <h3 class="text-xl font-black italic uppercase tracking-tighter dark:text-white">Name Your Route</h3>
                 <p id="modal-dist" class="text-[10px] text-indigo-500 font-bold uppercase tracking-widest">Total Distance: 0.00 miles</p>
             </div>
             <input id="route-name-input" type="text" placeholder="e.g. Morning Run" class="w-full p-4 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-bold outline-none focus:ring-2 ring-indigo-500 dark:text-white">
             <div class="flex gap-3">
-                <button id="confirm-save-btn" class="flex-grow bg-indigo-600 text-white py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-lg shadow-indigo-500/20">Save Path</button>
+                <button id="confirm-save-btn" class="flex-grow bg-indigo-600 text-white py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest">Save Path</button>
                 <button id="close-modal-btn" class="px-6 bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-300 py-4 rounded-2xl font-black uppercase text-[10px]">Cancel</button>
             </div>
         </div>
@@ -130,13 +133,13 @@
                 </div>
             </div>
             <div class="pt-10 border-t border-slate-100 dark:border-slate-800 text-center">
-                <p class="text-[9px] text-slate-400 font-bold uppercase">CustomRoutes v2.2.0</p>
+                <p class="text-[9px] text-slate-400 font-bold uppercase">CustomRoutes v2.3.0</p>
             </div>
         </div>
     </div>
 
-    <!-- Loading Screen (Initial Boot) -->
-    <div id="boot-screen" class="fixed inset-0 z-[300] flex flex-col items-center justify-center p-6 text-center transition-all duration-700">
+    <!-- Initial Boot Screen -->
+    <div id="boot-screen" class="fixed inset-0 z-[3000] flex flex-col items-center justify-center p-6 text-center transition-all duration-700">
         <div class="absolute inset-0 hero-pattern bg-slate-950"></div>
         <div class="relative max-w-md w-full space-y-8">
             <div class="space-y-3">
@@ -152,7 +155,6 @@
         </div>
     </div>
 
-    <!-- Interface Selection -->
     <div id="selection-screen" class="fixed inset-0 z-[200] hidden flex flex-col items-center justify-center p-6 transition-all duration-500 opacity-0">
         <div class="absolute inset-0 hero-pattern bg-slate-950"></div>
         <div class="relative z-10 w-full max-w-xl text-center space-y-8">
@@ -160,7 +162,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <button onclick="selectMode('desktop')" class="group p-8 bg-white/5 hover:bg-white/10 border border-white/10 rounded-[2.5rem] transition-all flex flex-col items-center gap-4">
                     <div class="p-4 bg-indigo-500 rounded-2xl text-white shadow-xl shadow-indigo-500/20 group-hover:scale-110 transition-transform">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2-2v10a2 2 0 002 2z" /></svg>
                     </div>
                     <h3 class="text-white font-black uppercase text-sm">Desktop Optimization</h3>
                 </button>
@@ -174,7 +176,6 @@
         </div>
     </div>
 
-    <!-- Syncing Screen -->
     <div id="loading-screen" class="fixed inset-0 z-[100] hidden flex flex-col items-center justify-center p-6 text-center transition-all duration-500 opacity-0">
         <div class="absolute inset-0 hero-pattern bg-slate-950"></div>
         <div class="relative max-w-md w-full space-y-10">
@@ -218,7 +219,7 @@
                             </div>
                         </div>
 
-                        <button id="new-route-btn" class="w-full bg-indigo-600 text-white py-4 rounded-2xl hover:bg-indigo-500 font-black uppercase tracking-widest text-xs shadow-lg shadow-indigo-500/20">
+                        <button id="new-route-btn" class="w-full bg-indigo-600 text-white py-4 rounded-2xl hover:bg-indigo-500 font-black uppercase tracking-widest text-xs">
                             + Draw Route
                         </button>
                         
@@ -327,8 +328,48 @@
             if (!isDriving || !currentDriveRoute || !lastKnownPos) return;
             const miles = calculateRemaining(lastKnownPos, currentDriveRoute.path);
             document.getElementById('hud-miles').innerText = miles.toFixed(2) + " Mi";
-            const mins = Math.max(1, Math.round((miles / 30) * 60));
-            document.getElementById('hud-time').innerText = mins + " min";
+            const mins = Math.round((miles / 30) * 60);
+            document.getElementById('hud-time').innerText = mins + " Min";
+        }
+
+        function updateSavedList() {
+            const list = document.getElementById('saved-routes-list');
+            list.innerHTML = '';
+            
+            if (savedRoutes.length === 0) {
+                list.innerHTML = `
+                    <div class="text-center py-10 px-4 bg-slate-50 dark:bg-slate-800/30 rounded-[2rem] border-2 border-dashed border-slate-200 dark:border-slate-800">
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-relaxed">No paths stored.<br>Tap "Draw Route" to begin.</p>
+                    </div>`;
+                return;
+            }
+
+            savedRoutes.forEach(route => {
+                const item = document.createElement('div');
+                item.className = 'group bg-white dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 p-4 rounded-2xl hover:border-indigo-500 transition-all shadow-sm';
+                item.innerHTML = `
+                    <div class="flex flex-col gap-3">
+                        <div class="flex justify-between items-start">
+                            <div onclick="viewRoute(${route.id})" class="cursor-pointer">
+                                <h4 class="text-[11px] font-black uppercase tracking-tight text-slate-800 dark:text-slate-100">${route.name}</h4>
+                                <p class="text-[9px] font-bold text-indigo-500 uppercase">${route.distance} Miles</p>
+                            </div>
+                            <button onclick="deleteRoute(${route.id})" class="text-slate-300 hover:text-rose-500 transition-colors p-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="enterDriveMode(${route.id})" class="flex-grow bg-slate-900 dark:bg-indigo-600 text-white py-2.5 rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-indigo-500 transition-colors">
+                                Drive Path
+                            </button>
+                            <button onclick="viewRoute(${route.id})" class="px-4 bg-slate-50 dark:bg-slate-700 text-slate-500 dark:text-slate-200 py-2.5 rounded-xl font-black text-[9px] uppercase hover:bg-slate-100 transition-colors">
+                                View
+                            </button>
+                        </div>
+                    </div>
+                `;
+                list.appendChild(item);
+            });
         }
 
         function setTheme(theme) {
@@ -490,12 +531,9 @@
         }
 
         function handleGPSBlocked() {
-            const status = document.getElementById('tracking-status');
-            if (status) status.className = 'w-2 h-2 rounded-full bg-rose-500';
-            const label = document.getElementById('gps-label');
-            if (label) label.innerText = "Blocked";
-            const entry = document.getElementById('manual-loc-entry');
-            if (entry) entry.classList.remove('hidden');
+            document.getElementById('tracking-status').className = 'w-2 h-2 rounded-full bg-rose-500';
+            document.getElementById('gps-label').innerText = "Blocked";
+            document.getElementById('manual-loc-entry').classList.remove('hidden');
         }
 
         document.getElementById('new-route-btn').onclick = () => {
@@ -519,11 +557,9 @@
         };
 
         document.getElementById('confirm-save-btn').onclick = () => {
-            const nameInput = document.getElementById('route-name-input');
-            const name = nameInput.value.trim() || `Path ${Date.now()}`;
+            const name = document.getElementById('route-name-input').value.trim() || `Path ${Date.now()}`;
             saveRoute(name);
             document.getElementById('name-modal').classList.add('hidden');
-            nameInput.value = "";
             resetCurrentDrawing();
         };
 
@@ -565,35 +601,6 @@
             if (activeViewLine) map.removeLayer(activeViewLine);
             activeViewLine = L.polyline(r.path, { color: '#ec4899', weight: 6, opacity: 0.8 }).addTo(map);
             map.fitBounds(activeViewLine.getBounds(), { padding: [50, 50] });
-        };
-
-        function updateSavedList() {
-            const list = document.getElementById('saved-routes-list');
-            list.innerHTML = '';
-            if (savedRoutes.length === 0) {
-                list.innerHTML = '<p class="text-[9px] text-slate-400 italic">No routes saved yet.</p>';
-                return;
-            }
-            savedRoutes.forEach(r => {
-                const item = document.createElement('div');
-                item.className = "group bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700/50 p-4 rounded-2xl shadow-sm hover:shadow-md transition-all";
-                item.innerHTML = `
-                    <div class="flex justify-between items-start mb-3">
-                        <div>
-                            <h4 class="text-[11px] font-black uppercase text-slate-800 dark:text-white leading-tight mb-1">${r.name}</h4>
-                            <p class="text-[9px] font-bold text-indigo-500 uppercase tracking-widest">${r.distance} miles</p>
-                        </div>
-                        <button onclick="deleteRoute(${r.id})" class="text-slate-300 hover:text-rose-500 transition-colors">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                        </button>
-                    </div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <button onclick="viewRoute(${r.id})" class="bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-200 py-2.5 rounded-xl font-black text-[9px] uppercase tracking-wider hover:bg-slate-200 dark:hover:bg-slate-600">View</button>
-                        <button onclick="enterDriveMode(${r.id})" class="bg-indigo-600 text-white py-2.5 rounded-xl font-black text-[9px] uppercase tracking-wider shadow-lg shadow-indigo-500/20 hover:bg-indigo-500">Drive</button>
-                    </div>
-                `;
-                list.appendChild(item);
-            });
         }
     </script>
 </body>
