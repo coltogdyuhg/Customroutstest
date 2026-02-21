@@ -75,9 +75,14 @@
         .dark .leaflet-tile-pane { filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3); }
         .dark .leaflet-container { background: #0f172a !important; }
 
-        /* Hide handle on desktop */
         #mobile-drag-handle { display: none; }
         .mode-mobile #mobile-drag-handle { display: flex; }
+
+        /* Search Bar Animation */
+        .search-focus {
+            ring-width: 2px;
+            ring-color: #4f46e5;
+        }
     </style>
 </head>
 <body class="bg-slate-50 dark:bg-slate-950 overflow-hidden font-sans text-slate-900 transition-colors duration-300">
@@ -161,7 +166,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <button onclick="selectMode('desktop')" class="group p-8 bg-white/5 hover:bg-white/10 border border-white/10 rounded-[2.5rem] transition-all flex flex-col items-center gap-4">
                     <div class="p-4 bg-indigo-500 rounded-2xl text-white shadow-xl shadow-indigo-500/20 group-hover:scale-110 transition-transform">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2-2v10a2 2 0 002 2z" /></svg>
                     </div>
                     <h3 class="text-white font-black uppercase text-sm">Desktop Optimization</h3>
                 </button>
@@ -212,6 +217,22 @@
                 <!-- Sidebar Content -->
                 <div id="sidebar-scrollable" class="overflow-y-auto flex-grow h-[45vh] md:h-auto">
                     <div class="p-5 space-y-4 border-b border-slate-100 dark:border-slate-800">
+                        
+                        <!-- NEW Global Search Bar -->
+                        <div class="space-y-2">
+                            <label class="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Go to Location</label>
+                            <div class="relative group">
+                                <input id="global-search-input" type="text" placeholder="Search city, street or ZIP..." 
+                                    class="w-full p-4 pl-12 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-[11px] font-bold dark:text-white outline-none focus:border-indigo-500 transition-all">
+                                <div class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                                </div>
+                                <button id="global-search-go" class="absolute right-2 top-1/2 -translate-y-1/2 bg-indigo-600 text-white p-2 rounded-xl text-[9px] font-black uppercase hover:bg-indigo-500 transition-colors">
+                                    Go
+                                </button>
+                            </div>
+                        </div>
+
                         <div id="manual-loc-entry" class="hidden space-y-2">
                             <label class="text-[9px] font-black text-rose-500 uppercase tracking-widest">GPS Access Blocked</label>
                             <div class="flex gap-2">
@@ -220,7 +241,7 @@
                             </div>
                         </div>
 
-                        <button id="new-route-btn" class="w-full bg-indigo-600 text-white py-4 rounded-2xl hover:bg-indigo-500 font-black uppercase tracking-widest text-xs">
+                        <button id="new-route-btn" class="w-full bg-indigo-600 text-white py-4 rounded-2xl hover:bg-indigo-500 font-black uppercase tracking-widest text-xs shadow-lg shadow-indigo-500/10">
                             + Draw Route
                         </button>
                         
@@ -287,6 +308,53 @@
             }
         }
 
+        // --- Search Implementation ---
+        const searchInput = document.getElementById('global-search-input');
+        const searchBtn = document.getElementById('global-search-go');
+
+        async function performSearch() {
+            const query = searchInput.value.trim();
+            if (!query) return;
+
+            searchBtn.innerText = "...";
+            searchBtn.disabled = true;
+
+            try {
+                const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`);
+                const data = await response.json();
+
+                if (data && data.length > 0) {
+                    const { lat, lon } = data[0];
+                    const latlng = [parseFloat(lat), parseFloat(lon)];
+                    
+                    map.flyTo(latlng, 15, {
+                        animate: true,
+                        duration: 1.5
+                    });
+
+                    // For mobile, collapse sidebar so they can see where they searched
+                    if (currentMode === 'mobile') {
+                        const sidebar = document.getElementById('sidebar');
+                        if (!sidebar.classList.contains('is-collapsed')) {
+                            toggleSidebarCollapse();
+                        }
+                    }
+                } else {
+                    alert("Location not found. Try a more specific search.");
+                }
+            } catch (err) {
+                console.error("Search failed:", err);
+            } finally {
+                searchBtn.innerText = "Go";
+                searchBtn.disabled = false;
+            }
+        }
+
+        searchBtn.onclick = performSearch;
+        searchInput.onkeydown = (e) => {
+            if (e.key === 'Enter') performSearch();
+        };
+
         // --- Distance Logic ---
         function calculateDistance(points) {
             let total = 0;
@@ -327,13 +395,10 @@
             isDriving = true;
             document.getElementById('drive-hud').classList.remove('hidden');
             
-            // View route
             window.viewRoute(id);
             
-            // Center on user
             if (lastKnownPos) map.flyTo(lastKnownPos, 18);
             
-            // Collapse sidebar automatically when starting drive
             if (currentMode === 'mobile') {
                 const sidebar = document.getElementById('sidebar');
                 if (!sidebar.classList.contains('is-collapsed')) {
@@ -358,7 +423,6 @@
             const miles = calculateRemaining(lastKnownPos, currentDriveRoute.path);
             document.getElementById('hud-miles').innerText = miles.toFixed(2) + " Mi";
             
-            // Assume 30mph speed
             const hours = miles / 30;
             const mins = Math.round(hours * 60);
             document.getElementById('hud-time').innerText = mins + " Min";
@@ -388,7 +452,6 @@
             document.getElementById('settings-panel').classList.toggle('translate-x-full');
         }
 
-        // Boot Loader Animation
         window.onload = () => {
             let prog = 0;
             const bar = document.getElementById('boot-progress');
@@ -520,7 +583,6 @@
             document.getElementById('manual-loc-entry').classList.remove('hidden');
         }
 
-        // --- Interaction Logic ---
         document.getElementById('new-route-btn').onclick = () => {
             resetCurrentDrawing();
             isDrawing = true;
@@ -585,35 +647,36 @@
 
         window.viewRoute = (id) => {
             const r = savedRoutes.find(x => x.id === id);
-            if (!r) return;
-            if (activeViewLine) map.removeLayer(activeViewLine);
-            activeViewLine = L.polyline(r.path, { color: '#db2777', weight: 5 }).addTo(map);
+            if(!r) return;
+            
+            if(activeViewLine) map.removeLayer(activeViewLine);
+            activeViewLine = L.polyline(r.path, { color: '#db2777', weight: 6, opacity: 0.8 }).addTo(map);
             map.fitBounds(activeViewLine.getBounds(), { padding: [50, 50] });
         }
 
         function updateSavedList() {
             const list = document.getElementById('saved-routes-list');
-            if(savedRoutes.length === 0) {
-                list.innerHTML = '<div class="text-center py-8 opacity-40 text-[10px] font-bold dark:text-white">No saved routes.</div>';
-                return;
-            }
-            list.innerHTML = savedRoutes.map(route => `
-                <div class="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-4 rounded-2xl shadow-sm space-y-3">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <h4 class="text-[11px] font-black uppercase dark:text-white">${route.name}</h4>
-                            <p class="text-[9px] font-bold text-indigo-500">${route.distance} Miles</p>
+            list.innerHTML = '';
+            
+            savedRoutes.forEach(r => {
+                const card = document.createElement('div');
+                card.className = "bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700/50 p-4 rounded-2xl shadow-sm hover:shadow-md transition-all group";
+                card.innerHTML = `
+                    <div class="flex justify-between items-start mb-3">
+                        <div onclick="viewRoute(${r.id})" class="cursor-pointer">
+                            <h4 class="text-[11px] font-black italic uppercase tracking-tight text-slate-800 dark:text-white group-hover:text-indigo-600 transition-colors">${r.name}</h4>
+                            <p class="text-[9px] font-bold text-indigo-500 uppercase tracking-widest">${r.distance} Miles</p>
                         </div>
-                        <button onclick="deleteRoute(${route.id})" class="text-slate-300 hover:text-rose-500 p-1">
+                        <button onclick="deleteRoute(${r.id})" class="text-slate-300 hover:text-rose-500 transition-colors p-1">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                         </button>
                     </div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <button onclick="viewRoute(${route.id})" class="bg-slate-50 dark:bg-slate-700 py-2 rounded-lg text-[9px] font-black uppercase dark:text-white">Preview</button>
-                        <button onclick="enterDriveMode(${route.id})" class="bg-indigo-600 text-white py-2 rounded-lg text-[9px] font-black uppercase">Drive</button>
-                    </div>
-                </div>
-            `).join('');
+                    <button onclick="enterDriveMode(${r.id})" class="w-full bg-slate-50 dark:bg-slate-700/50 hover:bg-indigo-600 hover:text-white text-indigo-600 dark:text-indigo-400 py-2.5 rounded-xl text-[9px] font-black uppercase transition-all border border-indigo-50 dark:border-slate-700">
+                        Start Navigator
+                    </button>
+                `;
+                list.appendChild(card);
+            });
         }
     </script>
 </body>
