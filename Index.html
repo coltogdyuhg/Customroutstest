@@ -6,7 +6,6 @@
     <title>CustomRoutes - Navigator Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Leaflet.js -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
@@ -54,6 +53,21 @@
             border-radius: 50%;
             box-shadow: 0 0 10px rgba(0,0,0,0.2);
         }
+
+        /* Direction Arrow */
+        .user-direction-arrow {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-bottom: 10px solid #4f46e5;
+            filter: drop-shadow(0 -2px 2px rgba(0,0,0,0.2));
+        }
+
         .pulse-ring {
             position: absolute;
             top: 50%; left: 50%;
@@ -76,65 +90,6 @@
             100% { transform: translateY(0); opacity: 1; }
         }
 
-        /* === NEW: Compass Styles === */
-        #compass-container {
-            position: absolute;
-            bottom: 90px;
-            left: 20px;
-            z-index: 1000;
-            background: rgba(15, 23, 42, 0.85);
-            backdrop-filter: blur(12px);
-            border: 2px solid rgba(99, 102, 241, 0.3);
-            border-radius: 9999px;
-            padding: 12px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-            transition: all 0.3s ease;
-        }
-        #compass {
-            width: 68px;
-            height: 68px;
-            border-radius: 50%;
-            background: radial-gradient(circle, #1e2937 0%, #0f172a 100%);
-            border: 3px solid #6366f1;
-            position: relative;
-            box-shadow: inset 0 0 20px rgba(99, 102, 241, 0.4),
-                        0 0 25px rgba(99, 102, 241, 0.3);
-        }
-        #compass-arrow {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 4px;
-            height: 32px;
-            background: linear-gradient(to bottom, #f43f5e, #e11d48);
-            transform-origin: bottom center;
-            border-radius: 9999px;
-            box-shadow: 0 0 12px #f43f5e;
-            transition: transform 0.15s ease-out;
-        }
-        #compass-arrow::after {
-            content: '';
-            position: absolute;
-            top: -8px;
-            left: -4px;
-            width: 0;
-            height: 0;
-            border-left: 6px solid transparent;
-            border-right: 6px solid transparent;
-            border-bottom: 10px solid #f43f5e;
-        }
-        #compass-heading {
-            position: absolute;
-            bottom: -22px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 10px;
-            font-weight: 900;
-            color: #a5b4fc;
-            letter-spacing: 1px;
-            text-shadow: 0 1px 3px rgba(0,0,0,0.6);
-        }
-
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
 
@@ -144,13 +99,46 @@
 
         #mobile-drag-handle { display: none; }
         .mode-mobile #mobile-drag-handle { display: flex; }
+
+        .leaflet-control-layers { border-radius: 12px !important; border: none !important; box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important; padding: 5px !important; }
+        
+        /* Toggle Switch Style */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 20px;
+        }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #cbd5e1;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 14px; width: 14px;
+            left: 3px; bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider { background-color: #4f46e5; }
+        input:checked + .slider:before { transform: translateX(20px); }
     </style>
 </head>
 <body class="bg-slate-50 dark:bg-slate-950 overflow-hidden font-sans text-slate-900 transition-colors duration-300">
 
-    <!-- Drive Mode HUD Overlay -->
     <div id="drive-hud" class="fixed top-20 right-4 z-[2000] hidden transition-all duration-500 scale-90 origin-top-right">
         <div class="bg-slate-900/90 text-white rounded-3xl p-4 shadow-2xl flex items-center gap-6 border border-white/10 backdrop-blur-md">
+            <div class="flex flex-col border-r border-white/10 pr-4">
+                <span class="text-[8px] font-black uppercase tracking-widest text-indigo-400">Heading</span>
+                <span id="hud-heading" class="text-lg font-black italic tabular-nums">--</span>
+            </div>
             <div class="flex flex-col border-r border-white/10 pr-4">
                 <span class="text-[8px] font-black uppercase tracking-widest text-indigo-400">Distance</span>
                 <span id="hud-miles" class="text-lg font-black italic tabular-nums">0.00 Mi</span>
@@ -175,15 +163,6 @@
         </div>
     </div>
 
-    <!-- Compass Indicator -->
-    <div id="compass-container" class="hidden">
-        <div id="compass">
-            <div id="compass-arrow"></div>
-        </div>
-        <div id="compass-heading">N 0°</div>
-    </div>
-
-    <!-- Route Name Modal -->
     <div id="name-modal" class="fixed inset-0 z-[1000] hidden flex items-center justify-center p-6 bg-slate-950/60 backdrop-blur-sm">
         <div class="bg-white dark:bg-slate-800 w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl space-y-6 border border-slate-200 dark:border-slate-700">
             <div class="space-y-2">
@@ -198,7 +177,6 @@
         </div>
     </div>
 
-    <!-- Settings Sidebar -->
     <div id="settings-panel" class="fixed inset-y-0 right-0 w-full md:w-80 bg-white dark:bg-slate-900 z-[1100] translate-x-full transition-transform duration-300 ease-in-out shadow-2xl border-l border-slate-200 dark:border-slate-800">
         <div class="h-16 flex items-center justify-between px-6 border-b border-slate-100 dark:border-slate-800">
             <h3 class="text-xs font-black uppercase tracking-widest dark:text-white">System Settings</h3>
@@ -227,15 +205,59 @@
             </div>
 
             <div class="pt-10 border-t border-slate-100 dark:border-slate-800 text-center">
-                <p class="text-[9px] text-slate-400 font-bold uppercase">CustomRoutes v2.5.1</p>
+                <p class="text-[9px] text-slate-400 font-bold uppercase">CustomRoutes v2.5.0</p>
             </div>
         </div>
     </div>
 
-    <!-- Loading Screen + Selection Screen (unchanged) -->
-    <!-- ... (keeping the rest of your original loading/selection screens) ... -->
+    <div id="boot-screen" class="fixed inset-0 z-[300] flex flex-col items-center justify-center p-6 text-center transition-all duration-700">
+        <div class="absolute inset-0 hero-pattern bg-slate-950"></div>
+        <div class="relative max-w-md w-full space-y-8">
+            <div class="space-y-3">
+                <div class="w-16 h-16 bg-indigo-600 rounded-2xl mx-auto flex items-center justify-center shadow-2xl shadow-indigo-500/20 animate-bounce">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                </div>
+                <h2 class="text-3xl font-black text-white italic uppercase tracking-tighter">CustomRoutes</h2>
+                <p class="text-indigo-400 text-[10px] font-black uppercase tracking-[0.4em]" id="boot-label">System Initializing...</p>
+            </div>
+            <div class="relative w-full bg-white/5 h-1.5 rounded-full overflow-hidden border border-white/5">
+                <div id="boot-progress" class="h-full bg-indigo-500 w-0 transition-all duration-200 ease-out"></div>
+            </div>
+        </div>
+    </div>
 
-    <!-- Main Interface -->
+    <div id="selection-screen" class="fixed inset-0 z-[200] hidden flex flex-col items-center justify-center p-6 transition-all duration-500 opacity-0">
+        <div class="absolute inset-0 hero-pattern bg-slate-950"></div>
+        <div class="relative z-10 w-full max-w-xl text-center space-y-8">
+            <h1 class="text-4xl font-black text-white italic uppercase tracking-tighter">Choose Interface</h1>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <button onclick="selectMode('desktop')" class="group p-8 bg-white/5 hover:bg-white/10 border border-white/10 rounded-[2.5rem] transition-all flex flex-col items-center gap-4">
+                    <div class="p-4 bg-indigo-500 rounded-2xl text-white shadow-xl shadow-indigo-500/20 group-hover:scale-110 transition-transform">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2-2v10a2 2 0 002 2z" /></svg>
+                    </div>
+                    <h3 class="text-white font-black uppercase text-sm">Desktop Optimization</h3>
+                </button>
+                <button onclick="selectMode('mobile')" class="group p-8 bg-white/5 hover:bg-white/10 border border-white/10 rounded-[2.5rem] transition-all flex flex-col items-center gap-4">
+                    <div class="p-4 bg-pink-500 rounded-2xl text-white shadow-xl shadow-pink-500/20 group-hover:scale-110 transition-transform">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2-2v14a2 2 0 002 2z" /></svg>
+                    </div>
+                    <h3 class="text-white font-black uppercase text-sm">Mobile Experience</h3>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="loading-screen" class="fixed inset-0 z-[100] hidden flex flex-col items-center justify-center p-6 text-center transition-all duration-500 opacity-0">
+        <div class="absolute inset-0 hero-pattern bg-slate-950"></div>
+        <div class="relative max-w-md w-full space-y-10">
+            <h2 class="text-2xl font-black text-white italic uppercase tracking-tighter">Syncing Satellites</h2>
+            <p class="text-emerald-400 text-[10px] font-black uppercase tracking-[0.3em]" id="status-label">Acquiring Precision GPS...</p>
+            <div class="relative w-full bg-white/5 h-2 rounded-full overflow-hidden border border-white/5">
+                <div id="progress-bar" class="h-full bg-gradient-to-r from-indigo-500 to-pink-500 w-0 transition-all duration-300"></div>
+            </div>
+        </div>
+    </div>
+
     <div id="app-interface" class="opacity-0 pointer-events-none transition-opacity duration-1000 flex flex-col h-screen">
         <header class="h-16 gradient-header flex items-center justify-between px-6 shadow-lg z-30 shrink-0">
             <div class="flex items-center gap-4">
@@ -261,7 +283,6 @@
 
         <main id="main-container" class="flex flex-grow overflow-hidden relative">
             <div id="sidebar" class="bg-white dark:bg-slate-900 shadow-2xl flex flex-col z-20 border-r border-slate-100 dark:border-slate-800">
-                <!-- Sidebar content unchanged -->
                 <div id="mobile-drag-handle" onclick="toggleSidebarCollapse()" class="flex flex-col items-center justify-center py-2 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 cursor-pointer">
                     <div id="sidebar-chevron" class="transition-transform duration-300 transform rotate-0">
                         <svg class="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
@@ -269,7 +290,6 @@
                 </div>
 
                 <div id="sidebar-scrollable" class="overflow-y-auto flex-grow h-[45vh] md:h-auto">
-                    <!-- Your existing sidebar content -->
                     <div class="p-5 space-y-4 border-b border-slate-100 dark:border-slate-800">
                         <div class="flex items-center justify-between px-1 mb-2">
                              <span class="text-[9px] font-black uppercase tracking-widest text-slate-400">Start at my location</span>
@@ -321,7 +341,6 @@
     </div>
 
     <script>
-        // === Existing variables + new ones ===
         let map, polyline, markers = [], routePath = [];
         let isDrawing = false, userMarker = null, searchMarker = null;
         let savedRoutes = JSON.parse(localStorage.getItem('saved_routes')) || [];
@@ -333,9 +352,8 @@
         let currentMode = 'desktop';
         let initialRecenterDone = false;
         let startAtLocation = false;
-        let currentHeading = 0; // New: direction in degrees
+        let userHeading = 0;
 
-        // === Sync toggles (unchanged) ===
         function syncToggles(el) {
             startAtLocation = el.checked;
             document.getElementById('settings-start-at-loc').checked = startAtLocation;
@@ -349,46 +367,81 @@
             chevron.style.transform = sidebar.classList.contains('is-collapsed') ? 'rotate(180deg)' : 'rotate(0deg)';
         }
 
-        // === Compass Functions ===
-        function updateCompass(heading) {
-            currentHeading = heading || 0;
-            const arrow = document.getElementById('compass-arrow');
-            const text = document.getElementById('compass-heading');
-            
-            arrow.style.transform = `translate(-50%, -100%) rotate(${currentHeading}deg)`;
-            
-            const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
-            const index = Math.round(currentHeading / 45) % 8;
-            text.textContent = `${directions[index]} ${Math.round(currentHeading)}°`;
-        }
+        const searchPinIcon = L.divIcon({
+            className: 'search-pin-wrapper',
+            html: `
+                <div class="search-pin-drop">
+                    <svg class="w-8 h-8 text-rose-600 drop-shadow-lg" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path>
+                    </svg>
+                </div>
+            `,
+            iconSize: [32, 32],
+            iconAnchor: [16, 32]
+        });
 
-        function initCompass() {
-            const compassContainer = document.getElementById('compass-container');
-            compassContainer.classList.remove('hidden');
+        async function performSearch(query) {
+            if (!query) return;
+            try {
+                const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`);
+                const data = await response.json();
+                
+                if (data && data.length > 0) {
+                    const result = data[0];
+                    const latlng = [parseFloat(result.lat), parseFloat(result.lon)];
+                    
+                    if (searchMarker) map.removeLayer(searchMarker);
+                    searchMarker = L.marker(latlng, { icon: searchPinIcon }).addTo(map);
+                    
+                    searchMarker.bindPopup(`
+                        <div class="p-2">
+                            <h4 class="font-bold text-slate-800 text-xs">${result.display_name.split(',')[0]}</h4>
+                            <p class="text-[10px] text-slate-500 mt-1">Location Found</p>
+                        </div>
+                    `, { closeButton: false }).openPopup();
 
-            // Use DeviceOrientation API (mobile)
-            if (window.DeviceOrientationEvent) {
-                window.addEventListener('deviceorientation', (event) => {
-                    if (event.webkitCompassHeading !== undefined) {
-                        updateCompass(event.webkitCompassHeading);
-                    } else if (event.alpha !== null) {
-                        // Fallback for some Android devices
-                        const heading = 360 - event.alpha;
-                        updateCompass(heading);
+                    map.flyTo(latlng, 14);
+
+                    if (currentMode === 'mobile') {
+                        const sidebar = document.getElementById('sidebar');
+                        if (!sidebar.classList.contains('is-collapsed')) toggleSidebarCollapse();
                     }
-                });
+                }
+            } catch (err) {
+                console.error("Search failed:", err);
             }
-
-            // GPS heading fallback (when moving)
-            // This will be updated from geolocation watchPosition
         }
 
-        // === Rest of your existing functions (search, distance, drive mode, etc.) ===
-        // ... (I kept all your original functions exactly the same, only adding compass logic) ...
+        document.getElementById('global-search').onkeydown = (e) => {
+            if (e.key === 'Enter') performSearch(e.target.value);
+        };
 
-        async function performSearch(query) { /* unchanged */ }
-        function calculateDistance(points) { /* unchanged */ }
-        function calculateRemaining(currentPos, routePoints) { /* unchanged */ }
+        function calculateDistance(points) {
+            let total = 0;
+            for (let i = 0; i < points.length - 1; i++) {
+                total += L.latLng(points[i]).distanceTo(L.latLng(points[i+1]));
+            }
+            return (total * 0.000621371).toFixed(2);
+        }
+
+        function calculateRemaining(currentPos, routePoints) {
+            if (!currentPos || routePoints.length < 2) return 0;
+            let nearestIdx = 0, minDist = Infinity;
+            routePoints.forEach((pt, idx) => {
+                const d = L.latLng(currentPos).distanceTo(L.latLng(pt));
+                if (d < minDist) { minDist = d; nearestIdx = idx; }
+            });
+            let remainingMeters = L.latLng(currentPos).distanceTo(L.latLng(routePoints[nearestIdx]));
+            for (let i = nearestIdx; i < routePoints.length - 1; i++) {
+                remainingMeters += L.latLng(routePoints[i]).distanceTo(L.latLng(routePoints[i+1]));
+            }
+            return (remainingMeters * 0.000621371);
+        }
+
+        function getCardinal(angle) {
+            const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+            return directions[Math.round(angle / 45) % 8];
+        }
 
         window.enterDriveMode = (id) => {
             const r = savedRoutes.find(x => x.id === id);
@@ -398,7 +451,10 @@
             document.getElementById('drive-hud').classList.remove('hidden');
             window.viewRoute(id);
             if (lastKnownPos) map.flyTo(lastKnownPos, 18);
-            if (currentMode === 'mobile') toggleSidebarCollapse();
+            if (currentMode === 'mobile') {
+                const sidebar = document.getElementById('sidebar');
+                if (!sidebar.classList.contains('is-collapsed')) toggleSidebarCollapse();
+            }
             updateHUD();
         };
 
@@ -414,6 +470,7 @@
             if (!isDriving || !currentDriveRoute || !lastKnownPos) return;
             const miles = calculateRemaining(lastKnownPos, currentDriveRoute.path);
             document.getElementById('hud-miles').innerText = miles.toFixed(2) + " Mi";
+            document.getElementById('hud-heading').innerText = getCardinal(userHeading);
             
             const carMins = Math.max(1, Math.round((miles / 30) * 60));
             const bikeMins = Math.max(1, Math.round((miles / 12) * 60));
@@ -424,10 +481,92 @@
             document.getElementById('hud-time-walk').innerText = walkMins + "m";
         }
 
-        function setTheme(theme) { /* unchanged */ }
-        function toggleSettings() { /* unchanged */ }
+        function setTheme(theme) {
+            currentTheme = theme;
+            localStorage.setItem('theme', theme);
+            const html = document.documentElement;
+            const lightBtn = document.getElementById('theme-light-btn');
+            const darkBtn = document.getElementById('theme-dark-btn');
+            if (theme === 'dark') {
+                html.classList.add('dark');
+                darkBtn.className = "py-3 rounded-xl text-[10px] font-black uppercase transition-all bg-indigo-600 text-white shadow-lg";
+                lightBtn.className = "py-3 rounded-xl text-[10px] font-black uppercase transition-all text-slate-400";
+            } else {
+                html.classList.remove('dark');
+                lightBtn.className = "py-3 rounded-xl text-[10px] font-black uppercase transition-all bg-white text-indigo-600 shadow-sm";
+                darkBtn.className = "py-3 rounded-xl text-[10px] font-black uppercase transition-all text-slate-400 dark:text-slate-500";
+            }
+        }
+        setTheme(currentTheme);
 
-        // Map initialization with compass
+        function toggleSettings() {
+            document.getElementById('settings-panel').classList.toggle('translate-x-full');
+        }
+
+        window.onload = () => {
+            let prog = 0;
+            const bar = document.getElementById('boot-progress');
+            const interval = setInterval(() => {
+                prog += Math.random() * 25;
+                if(prog > 100) prog = 100;
+                bar.style.width = prog + '%';
+                if(prog >= 100) {
+                    clearInterval(interval);
+                    setTimeout(showSelection, 300);
+                }
+            }, 100);
+        };
+
+        function showSelection() {
+            const boot = document.getElementById('boot-screen');
+            const selection = document.getElementById('selection-screen');
+            boot.classList.add('opacity-0', 'pointer-events-none');
+            setTimeout(() => {
+                boot.classList.add('hidden');
+                selection.classList.remove('hidden');
+                setTimeout(() => selection.classList.remove('opacity-0'), 50);
+            }, 700);
+        }
+
+        function selectMode(mode) {
+            currentMode = mode;
+            const selection = document.getElementById('selection-screen');
+            const loader = document.getElementById('loading-screen');
+            selection.classList.add('opacity-0', 'pointer-events-none');
+            setTimeout(() => {
+                selection.classList.add('hidden');
+                loader.classList.remove('hidden');
+                document.body.className += ` mode-${mode}`;
+                setTimeout(() => loader.classList.remove('opacity-0'), 50);
+                startMapLoading(mode);
+            }, 500);
+        }
+
+        function startMapLoading(mode) {
+            let prog = 0;
+            const bar = document.getElementById('progress-bar');
+            const interval = setInterval(() => {
+                prog += 10;
+                bar.style.width = prog + '%';
+                if(prog >= 100) {
+                    clearInterval(interval);
+                    finishLoading(mode);
+                }
+            }, 50);
+        }
+
+        function finishLoading(mode) {
+            const loader = document.getElementById('loading-screen');
+            const app = document.getElementById('app-interface');
+            loader.classList.add('opacity-0', 'pointer-events-none');
+            setTimeout(() => {
+                loader.classList.add('hidden');
+                app.classList.remove('opacity-0', 'pointer-events-none');
+                initMap(mode);
+                updateSavedList();
+            }, 500);
+        }
+
         function initMap(mode) {
             const fallback = [40.7128, -74.0060];
             map = L.map('map', { 
@@ -445,25 +584,48 @@
             const satelliteGroup = L.layerGroup([satelliteImagery, labelsOverlay]);
 
             lightLayer.addTo(map);
-            L.control.layers({ "Street": lightLayer, "Satellite": satelliteGroup }, null, { position: 'topleft' }).addTo(map);
+
+            const baseMaps = {
+                "Street": lightLayer,
+                "Satellite": satelliteGroup
+            };
+
+            L.control.layers(baseMaps, null, { position: 'topleft' }).addTo(map);
 
             polyline = L.polyline([], { color: '#6366f1', weight: 4, dashArray: '5, 10' }).addTo(map);
             
             const customIcon = L.divIcon({
                 className: 'custom-div-icon',
-                html: '<div class="pulse-ring"></div><div class="user-location-marker" style="width: 14px; height: 14px; position: relative; z-index: 10;"></div>',
+                html: `
+                    <div id="marker-orient" style="transform: rotate(0deg); transition: transform 0.2s;">
+                        <div class="user-direction-arrow"></div>
+                        <div class="pulse-ring"></div>
+                        <div class="user-location-marker" style="width: 14px; height: 14px; position: relative; z-index: 10;"></div>
+                    </div>
+                `,
                 iconSize: [14, 14],
                 iconAnchor: [7, 7]
             });
 
             userMarker = L.marker(fallback, { icon: customIcon }).addTo(map);
 
-            // GPS + Heading
+            // Orientation Listener
+            if (window.DeviceOrientationEvent) {
+                window.addEventListener('deviceorientationabsolute', (e) => {
+                    let heading = e.alpha || e.webkitCompassHeading;
+                    if (heading !== undefined) {
+                        userHeading = 360 - heading;
+                        const el = document.getElementById('marker-orient');
+                        if (el) el.style.transform = `rotate(${userHeading}deg)`;
+                    }
+                }, true);
+            }
+
             if ("geolocation" in navigator) {
                 navigator.geolocation.getCurrentPosition(
                     (pos) => {
                         const latlng = [pos.coords.latitude, pos.coords.longitude];
-                        updateLocation(latlng, pos.coords.heading);
+                        updateLocation(latlng);
                         if (!initialRecenterDone) {
                             map.flyTo(latlng, 15);
                             initialRecenterDone = true;
@@ -476,7 +638,12 @@
                 navigator.geolocation.watchPosition(
                     (pos) => {
                         const latlng = [pos.coords.latitude, pos.coords.longitude];
-                        updateLocation(latlng, pos.coords.heading);
+                        if (pos.coords.heading) {
+                            userHeading = pos.coords.heading;
+                            const el = document.getElementById('marker-orient');
+                            if (el) el.style.transform = `rotate(${userHeading}deg)`;
+                        }
+                        updateLocation(latlng);
                         if (isDriving) {
                             map.panTo(latlng);
                             updateHUD();
@@ -487,55 +654,163 @@
                 );
             }
 
-            map.on('click', (e) => { /* unchanged */ });
-            
-            // Initialize compass
-            initCompass();
+            map.on('click', (e) => {
+                if (!isDrawing) return;
+                
+                if (startAtLocation && routePath.length === 0 && lastKnownPos) {
+                    routePath.push(lastKnownPos);
+                    const startMarker = L.circleMarker(lastKnownPos, { 
+                        radius: 4, color: '#6366f1', fillOpacity: 1 
+                    }).addTo(map);
+                    markers.push(startMarker);
+                }
+
+                routePath.push([e.latlng.lat, e.latlng.lng]);
+                
+                const m = L.circleMarker(e.latlng, { 
+                    radius: 6, color: '#6366f1', fillColor: 'white', fillOpacity: 1, weight: 3 
+                }).addTo(map);
+                
+                markers.push(m);
+                polyline.setLatLngs(routePath);
+                document.getElementById('point-count').innerText = calculateDistance(routePath) + " Mi Total";
+            });
         }
 
-        function updateLocation(latlng, heading = null) {
+        function updateLocation(latlng) {
             lastKnownPos = latlng;
             if (userMarker) userMarker.setLatLng(latlng);
-
             document.getElementById('tracking-status').className = "w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]";
             document.getElementById('gps-label').innerText = "Live GPS";
             document.getElementById('gps-label').className = "text-[9px] font-black text-emerald-500 uppercase";
-
-            if (heading !== null && heading !== undefined) {
-                updateCompass(heading);
-            }
 
             if (!document.getElementById('weather-icon').src) {
                 loadWeatherIcon();
             }
         }
 
-        function handleGPSBlocked() { /* unchanged */ }
-        function recenter() { /* unchanged */ }
+        function handleGPSBlocked() {
+            document.getElementById('tracking-status').className = "w-2 h-2 rounded-full bg-rose-500";
+            document.getElementById('gps-label').innerText = "GPS Blocked";
+        }
 
-        // All your other functions (new-route, save, view, delete, etc.) remain exactly the same
-        // ... paste the rest of your original script here if needed ...
+        function recenter() {
+            if (lastKnownPos) map.flyTo(lastKnownPos, 15);
+        }
 
-        // For brevity in this response, I'm assuming you keep all your original script logic below initMap.
-        // Just make sure to call initCompass() inside initMap as shown.
-
-        window.onload = () => {
-            let prog = 0;
-            const bar = document.getElementById('boot-progress');
-            const interval = setInterval(() => {
-                prog += Math.random() * 25;
-                if(prog > 100) prog = 100;
-                bar.style.width = prog + '%';
-                if(prog >= 100) {
-                    clearInterval(interval);
-                    setTimeout(showSelection, 300);
-                }
-            }, 100);
+        document.getElementById('new-route-btn').onclick = () => {
+            isDrawing = true;
+            routePath = [];
+            markers.forEach(m => map.removeLayer(m));
+            markers = [];
+            polyline.setLatLngs([]);
+            document.getElementById('new-route-btn').classList.add('hidden');
+            document.getElementById('active-controls').classList.remove('hidden');
+            document.getElementById('point-count').innerText = "0.00 Mi Total";
         };
 
-        // Keep all your other functions: showSelection, selectMode, startMapLoading, finishLoading, etc.
-        // (They are unchanged)
+        document.getElementById('cancel-draft-btn').onclick = () => {
+            isDrawing = false;
+            markers.forEach(m => map.removeLayer(m));
+            markers = [];
+            polyline.setLatLngs([]);
+            document.getElementById('new-route-btn').classList.remove('hidden');
+            document.getElementById('active-controls').classList.add('hidden');
+        };
 
+        document.getElementById('end-route-btn').onclick = () => {
+            if (routePath.length < 2) return;
+            const dist = calculateDistance(routePath);
+            document.getElementById('modal-dist').innerText = `Total Distance: ${dist} miles`;
+            document.getElementById('name-modal').classList.remove('hidden');
+        };
+
+        document.getElementById('close-modal-btn').onclick = () => {
+            document.getElementById('name-modal').classList.add('hidden');
+        };
+
+        document.getElementById('confirm-save-btn').onclick = () => {
+            const name = document.getElementById('route-name-input').value || "Unnamed Route";
+            const newRoute = {
+                id: Date.now(),
+                name: name,
+                distance: calculateDistance(routePath),
+                path: routePath,
+                date: new Date().toLocaleDateString()
+            };
+            savedRoutes.push(newRoute);
+            localStorage.setItem('saved_routes', JSON.stringify(savedRoutes));
+            updateSavedList();
+            
+            isDrawing = false;
+            markers.forEach(m => map.removeLayer(m));
+            markers = [];
+            polyline.setLatLngs([]);
+            document.getElementById('new-route-btn').classList.remove('hidden');
+            document.getElementById('active-controls').classList.add('hidden');
+            document.getElementById('name-modal').classList.add('hidden');
+            document.getElementById('route-name-input').value = "";
+        };
+
+        window.deleteRoute = (id) => {
+            savedRoutes = savedRoutes.filter(r => r.id !== id);
+            localStorage.setItem('saved_routes', JSON.stringify(savedRoutes));
+            updateSavedList();
+            if (activeViewLine) map.removeLayer(activeViewLine);
+        };
+
+        window.viewRoute = (id) => {
+            const r = savedRoutes.find(x => x.id === id);
+            if (!r) return;
+            if (activeViewLine) map.removeLayer(activeViewLine);
+            activeViewLine = L.polyline(r.path, { color: '#db2777', weight: 6, opacity: 0.8 }).addTo(map);
+            map.fitBounds(activeViewLine.getBounds(), { padding: [50, 50] });
+        };
+
+        function updateSavedList() {
+            const list = document.getElementById('saved-routes-list');
+            list.innerHTML = "";
+            [...savedRoutes].reverse().forEach(r => {
+                const div = document.createElement('div');
+                div.className = "bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 hover:border-indigo-200 dark:hover:border-indigo-900 transition-all group";
+                div.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <h4 class="text-xs font-black uppercase dark:text-white">${r.name}</h4>
+                            <p class="text-[9px] font-bold text-slate-400 mt-0.5">${r.date} • ${r.distance} Mi</p>
+                        </div>
+                        <button onclick="deleteRoute(${r.id})" class="text-slate-300 hover:text-rose-500 transition-colors opacity-0 group-hover:opacity-100">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                    </div>
+                    <div class="flex gap-2 mt-3">
+                        <button onclick="viewRoute(${r.id})" class="flex-grow bg-white dark:bg-slate-700 py-2 rounded-xl text-[9px] font-black uppercase border border-slate-200 dark:border-slate-600 dark:text-white">View</button>
+                        <button onclick="enterDriveMode(${r.id})" class="flex-grow bg-indigo-600 text-white py-2 rounded-xl text-[9px] font-black uppercase shadow-lg shadow-indigo-500/20">Go</button>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        async function loadWeatherIcon() {
+            if (!lastKnownPos) return;
+            try {
+                const [lat, lon] = lastKnownPos;
+                const apiKey = '150ba377c3ca4474889150133260503';
+                const weatherRes = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}`);
+                if (!weatherRes.ok) return;
+                const data = await weatherRes.json();
+                const iconCode = data.weather?.[0]?.icon;
+                if (iconCode) {
+                    document.getElementById('weather-icon').src = `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
+                    document.getElementById('weather-indicator').classList.remove('hidden');
+                }
+            } catch (err) {}
+        }
+
+        setTimeout(() => {
+            if (lastKnownPos && !document.getElementById('weather-icon').src) loadWeatherIcon();
+        }, 4000);
     </script>
 </body>
 </html>
