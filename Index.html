@@ -165,16 +165,6 @@
                     <button onclick="setTheme('dark')" id="theme-dark-btn" class="py-3 rounded-xl text-[10px] font-black uppercase transition-all">Dark</button>
                 </div>
             </div>
-            <div class="space-y-4">
-                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Global Options</label>
-                <div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
-                    <span class="text-[10px] font-black uppercase dark:text-white">Start at Location</span>
-                    <label class="switch">
-                        <input type="checkbox" id="settings-start-at-loc" onchange="syncToggles(this)">
-                        <span class="slider"></span>
-                    </label>
-                </div>
-            </div>
         </div>
     </div>
 
@@ -236,65 +226,40 @@
                     class="w-full bg-white/10 border border-white/20 rounded-full py-2 px-10 text-xs text-white placeholder-white/60 focus:bg-white/20 outline-none focus:ring-2 ring-white/30 transition-all">
                 <svg class="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
             </div>
-            <div class="flex items-center gap-2">
-                <button onclick="toggleSettings()" class="bg-white/10 hover:bg-white/20 text-white p-2.5 rounded-full border border-white/10 flex items-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                </button>
-                <div id="weather-indicator" class="hidden w-7 h-7 flex items-center justify-center rounded-full bg-white/10 border border-white/20">
-                    <img id="weather-icon" src="" alt="Weather" class="w-5 h-5 opacity-90">
-                </div>
-            </div>
+            <button onclick="toggleSettings()" class="bg-white/10 hover:bg-white/20 text-white p-2.5 rounded-full border border-white/10">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path></svg>
+            </button>
         </header>
 
         <main id="main-container" class="flex flex-grow overflow-hidden relative">
             <div id="sidebar" class="bg-white dark:bg-slate-900 shadow-2xl flex flex-col z-20 border-r border-slate-100 dark:border-slate-800">
                 <div id="mobile-drag-handle" onclick="toggleSidebarCollapse()" class="flex flex-col items-center justify-center py-2 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 cursor-pointer">
-                    <div id="sidebar-chevron" class="transition-transform duration-300 transform rotate-0">
+                    <div id="sidebar-chevron" class="transition-transform duration-300">
                         <svg class="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                     </div>
                 </div>
 
-                <div id="sidebar-scrollable" class="overflow-y-auto flex-grow h-[45vh] md:h-auto">
-                    <div class="p-5 space-y-4 border-b border-slate-100 dark:border-slate-800">
-                        <div class="flex items-center justify-between px-1 mb-2">
-                             <span class="text-[9px] font-black uppercase tracking-widest text-slate-400">Start at my location</span>
-                             <label class="switch">
-                                <input type="checkbox" id="inline-start-at-loc" onchange="syncToggles(this)">
-                                <span class="slider"></span>
-                            </label>
-                        </div>
-
-                        <button id="new-route-btn" class="w-full bg-indigo-600 text-white py-4 rounded-2xl hover:bg-indigo-500 font-black uppercase tracking-widest text-xs shadow-lg shadow-indigo-500/20 transition-all">
+                <div id="sidebar-scrollable" class="overflow-y-auto flex-grow">
+                    <div class="p-5 space-y-4">
+                        <button id="new-route-btn" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black uppercase text-xs shadow-lg shadow-indigo-500/20">
                             + Draw Route
                         </button>
-
-                        <button onclick="openNavModal()" class="w-full bg-pink-600 text-white py-4 rounded-2xl hover:bg-pink-500 font-black uppercase tracking-widest text-xs shadow-lg shadow-pink-500/20 transition-all">
+                        <button onclick="openNavModal()" class="w-full bg-pink-600 text-white py-4 rounded-2xl font-black uppercase text-xs shadow-lg shadow-pink-500/20">
                             🎯 Quick Navigate
                         </button>
-                        
                         <div id="active-controls" class="hidden space-y-2">
-                            <div class="bg-indigo-50 dark:bg-slate-800 border-2 border-indigo-100 dark:border-indigo-900/30 p-4 rounded-2xl flex flex-col gap-3">
-                                <div class="flex justify-between items-center">
-                                    <span id="point-count" class="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase">0.00 Mi Total</span>
-                                </div>
+                            <div class="bg-indigo-50 dark:bg-slate-800 border-2 border-indigo-100 p-4 rounded-2xl">
+                                <span id="point-count" class="text-[10px] font-black text-indigo-600 uppercase block mb-3">0.00 Mi Total</span>
                                 <div class="grid grid-cols-2 gap-2">
                                     <button id="end-route-btn" class="bg-emerald-500 text-white py-3 rounded-xl font-black text-[10px] uppercase">Save</button>
-                                    <button id="cancel-draft-btn" class="bg-white dark:bg-slate-700 text-rose-500 dark:text-rose-400 py-3 rounded-xl font-black text-[10px] uppercase border border-rose-100 dark:border-none">Cancel</button>
+                                    <button id="cancel-draft-btn" class="bg-white dark:bg-slate-700 text-rose-500 py-3 rounded-xl font-black text-[10px] uppercase border border-rose-100">Cancel</button>
                                 </div>
                             </div>
-                        </div>
-
-                        <div class="bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 p-3 rounded-xl flex items-center justify-between">
-                            <div class="flex items-center gap-3">
-                                <div id="tracking-status" class="w-2 h-2 rounded-full bg-slate-300"></div>
-                                <span id="gps-label" class="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase">Standby</span>
-                            </div>
-                            <button id="locate-me-btn" onclick="recenter()" class="text-indigo-600 dark:text-indigo-400 font-black text-[9px] uppercase hover:underline">Recenter</button>
                         </div>
                     </div>
 
-                    <div class="p-5 pb-20">
-                        <h3 class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-4">Saved Paths</h3>
+                    <div class="p-5">
+                        <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Saved Paths</h3>
                         <div id="saved-routes-list" class="space-y-3"></div>
                     </div>
                 </div>
@@ -302,7 +267,7 @@
 
             <div id="map-area" class="flex-grow relative">
                 <div id="map"></div>
-                <button onclick="recenter()" id="floating-locate" class="absolute bottom-6 right-6 md:hidden z-[1000] bg-white dark:bg-slate-800 w-14 h-14 rounded-full shadow-2xl border border-slate-200 dark:border-slate-700 text-indigo-600 flex items-center justify-center">
+                <button onclick="recenter()" id="floating-locate" class="absolute bottom-6 right-6 md:hidden z-[1000] bg-white dark:bg-slate-800 w-14 h-14 rounded-full shadow-2xl border border-slate-200 text-indigo-600 flex items-center justify-center">
                     <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path></svg>
                 </button>
             </div>
@@ -310,6 +275,9 @@
     </div>
 
     <script>
+        // CONFIGURATION
+        const GEMINI_API_KEY = "AIzaSyCGCDPjwx8xhbg_3dNJEFV3dtp-TBOWp8w";
+
         let map, polyline, markers = [], routePath = [];
         let isDrawing = false, userMarker = null, searchMarker = null;
         let savedRoutes = JSON.parse(localStorage.getItem('saved_routes')) || [];
@@ -320,16 +288,10 @@
         let currentTheme = localStorage.getItem('theme') || 'light';
         let currentMode = 'desktop';
         let initialRecenterDone = false;
-        let startAtLocation = false;
         let userHeading = 0;
         let selectedVehicle = 'car';
 
-        function syncToggles(el) {
-            startAtLocation = el.checked;
-            document.getElementById('settings-start-at-loc').checked = startAtLocation;
-            document.getElementById('inline-start-at-loc').checked = startAtLocation;
-        }
-
+        // UTILITY FUNCTIONS
         function toggleSidebarCollapse() {
             const sidebar = document.getElementById('sidebar');
             const chevron = document.getElementById('sidebar-chevron');
@@ -337,255 +299,186 @@
             chevron.style.transform = sidebar.classList.contains('is-collapsed') ? 'rotate(180deg)' : 'rotate(0deg)';
         }
 
-        const searchPinIcon = L.divIcon({
-            className: 'search-pin-wrapper',
-            html: `<div class="search-pin-drop"><svg class="w-8 h-8 text-rose-600 drop-shadow-lg" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path></svg></div>`,
-            iconSize: [32, 32], iconAnchor: [16, 32]
-        });
-
-        async function performSearch(query) {
-            if (!query) return;
-            try {
-                const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`);
-                const data = await response.json();
-                if (data && data.length > 0) {
-                    const result = data[0];
-                    const latlng = [parseFloat(result.lat), parseFloat(result.lon)];
-                    if (searchMarker) map.removeLayer(searchMarker);
-                    searchMarker = L.marker(latlng, { icon: searchPinIcon }).addTo(map);
-                    searchMarker.bindPopup(`<div class="p-2"><h4 class="font-bold text-slate-800 text-xs">${result.display_name.split(',')[0]}</h4><p class="text-[10px] text-slate-500 mt-1">Location Found</p></div>`, { closeButton: false }).openPopup();
-                    map.flyTo(latlng, 14);
-                    if (currentMode === 'mobile') {
-                        const sidebar = document.getElementById('sidebar');
-                        if (!sidebar.classList.contains('is-collapsed')) toggleSidebarCollapse();
-                    }
-                }
-            } catch (err) { console.error("Search failed:", err); }
-        }
-
-        document.getElementById('global-search').onkeydown = (e) => { if (e.key === 'Enter') performSearch(e.target.value); };
-
         function calculateDistance(points) {
             let total = 0;
             for (let i = 0; i < points.length - 1; i++) { total += L.latLng(points[i]).distanceTo(L.latLng(points[i+1])); }
             return (total * 0.000621371).toFixed(2);
         }
 
-        function calculateRemaining(currentPos, routePoints) {
-            if (!currentPos || routePoints.length < 2) return 0;
-            let nearestIdx = 0, minDist = Infinity;
-            routePoints.forEach((pt, idx) => {
-                const d = L.latLng(currentPos).distanceTo(L.latLng(pt));
-                if (d < minDist) { minDist = d; nearestIdx = idx; }
-            });
-            let remainingMeters = L.latLng(currentPos).distanceTo(L.latLng(routePoints[nearestIdx]));
-            for (let i = nearestIdx; i < routePoints.length - 1; i++) { remainingMeters += L.latLng(routePoints[i]).distanceTo(L.latLng(routePoints[i+1])); }
-            return (remainingMeters * 0.000621371);
-        }
+        // --- SMART ROUTE LOGIC (GEMINI INTEGRATED) ---
+        async function calculateSmartRoute() {
+            const destQuery = document.getElementById('nav-destination').value;
+            if (!destQuery || !lastKnownPos) return alert("Need your location and a destination!");
 
-        function getCardinal(angle) {
-            const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
-            return directions[Math.round(angle / 45) % 8];
-        }
+            try {
+                // Step 1: Ask Gemini to analyze the best routing strategy
+                const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [{
+                                text: `You are a GPS routing expert. The user is riding a ${selectedVehicle}. 
+                                If it's an e-bike, their speed is ${document.getElementById('ebike-speed').value} MPH. 
+                                Destination: ${destQuery}. 
+                                
+                                Rules:
+                                1. For E-Scooters (max 20mph): Use 'foot' profile to strictly find sidewalks/alleys/residential roads and avoid ALL main arteries.
+                                2. For Bikes: Use 'bicycle' profile to prioritize bike lanes.
+                                3. For E-Bikes < 25mph: Use 'bicycle'.
+                                4. For E-Bikes > 25mph or Cars: Use 'car'.
+                                
+                                Return ONLY a JSON object: {"profile": "car|bicycle|foot", "reasoning": "short explanation"}`
+                            }]
+                        }]
+                    })
+                });
 
-        window.enterDriveMode = (id) => {
-            const r = savedRoutes.find(x => x.id === id);
-            if (!r) return;
-            currentDriveRoute = r;
-            isDriving = true;
-            document.getElementById('drive-hud').classList.remove('hidden');
-            window.viewRoute(id);
-            if (lastKnownPos) map.flyTo(lastKnownPos, 18);
-            if (currentMode === 'mobile') {
-                const sidebar = document.getElementById('sidebar');
-                if (!sidebar.classList.contains('is-collapsed')) toggleSidebarCollapse();
+                const geminiData = await geminiResponse.json();
+                
+                // Sanitize response (removes potential markdown code blocks)
+                let rawText = geminiData.candidates[0].content.parts[0].text;
+                let cleanJson = rawText.replace(/```json|```/gi, '').trim();
+                const advice = JSON.parse(cleanJson);
+                
+                console.log("Gemini Routing Advice:", advice.reasoning);
+
+                // Step 2: Geocode the destination
+                const searchRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(destQuery)}`);
+                const searchData = await searchRes.json();
+                if (searchData.length === 0) return alert("Destination not found.");
+                
+                const destCoords = [searchData[0].lon, searchData[0].lat];
+                const startCoords = [lastKnownPos[1], lastKnownPos[0]];
+
+                // Step 3: Fetch the OSRM route using Gemini's chosen profile
+                const routeRes = await fetch(`https://router.project-osrm.org/route/v1/${advice.profile}/${startCoords.join(',')};${destCoords.join(',')}?overview=full&geometries=geojson`);
+                const routeData = await routeRes.json();
+
+                if (routeData.code !== 'Ok') return alert("No suitable route found for this vehicle safety level.");
+
+                // Step 4: Map Rendering
+                const coords = routeData.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+                if (activeViewLine) map.removeLayer(activeViewLine);
+                
+                // Color code based on safety: Green for protected paths, Indigo for roads
+                const routeColor = (advice.profile === 'car') ? '#4f46e5' : '#10b981';
+                
+                activeViewLine = L.polyline(coords, { color: routeColor, weight: 6, opacity: 0.8 }).addTo(map);
+                map.fitBounds(activeViewLine.getBounds(), { padding: [50, 50] });
+
+                const smartRoute = { 
+                    id: Date.now(), 
+                    name: `To ${destQuery.split(',')[0]} (${selectedVehicle})`, 
+                    distance: (routeData.routes[0].distance * 0.000621371).toFixed(2), 
+                    path: coords, 
+                    date: new Date().toLocaleDateString() 
+                };
+
+                savedRoutes.push(smartRoute);
+                localStorage.setItem('saved_routes', JSON.stringify(savedRoutes));
+                updateSavedList();
+                closeNavModal();
+                enterDriveMode(smartRoute.id);
+
+            } catch (err) {
+                console.error("Gemini/Routing Error:", err);
+                alert("Precision routing failed. Please check your connection.");
             }
-            updateHUD();
-        };
-
-        function exitDriveMode() {
-            isDriving = false;
-            currentDriveRoute = null;
-            document.getElementById('drive-hud').classList.add('hidden');
-            if (activeViewLine) map.removeLayer(activeViewLine);
-            activeViewLine = null;
         }
 
-        function updateHUD() {
-            if (!isDriving || !currentDriveRoute || !lastKnownPos) return;
-            const miles = calculateRemaining(lastKnownPos, currentDriveRoute.path);
-            document.getElementById('hud-miles').innerText = miles.toFixed(2) + " Mi";
-            document.getElementById('hud-heading').innerText = getCardinal(userHeading);
-            const carMins = Math.max(1, Math.round((miles / 30) * 60));
-            const bikeMins = Math.max(1, Math.round((miles / 12) * 60));
-            const walkMins = Math.max(1, Math.round((miles / 3) * 60));
-            document.getElementById('hud-time-car').innerText = carMins + "m";
-            document.getElementById('hud-time-bike').innerText = bikeMins + "m";
-            document.getElementById('hud-time-walk').innerText = walkMins + "m";
+        // --- MAP AND UI INIT ---
+        function selectVehicle(type) {
+            selectedVehicle = type;
+            document.querySelectorAll('.v-btn').forEach(btn => btn.classList.remove('border-indigo-500', 'bg-indigo-50'));
+            document.getElementById(`v-${type}`).classList.add('border-indigo-500', 'bg-indigo-50');
+            const ebikeDiv = document.getElementById('ebike-options');
+            type === 'ebike' ? ebikeDiv.classList.remove('hidden') : ebikeDiv.classList.add('hidden');
         }
 
-        function setTheme(theme) {
-            currentTheme = theme;
-            localStorage.setItem('theme', theme);
-            const html = document.documentElement;
-            const lightBtn = document.getElementById('theme-light-btn');
-            const darkBtn = document.getElementById('theme-dark-btn');
-            if (theme === 'dark') {
-                html.classList.add('dark');
-                darkBtn.className = "py-3 rounded-xl text-[10px] font-black uppercase transition-all bg-indigo-600 text-white shadow-lg";
-                lightBtn.className = "py-3 rounded-xl text-[10px] font-black uppercase transition-all text-slate-400";
-            } else {
-                html.classList.remove('dark');
-                lightBtn.className = "py-3 rounded-xl text-[10px] font-black uppercase transition-all bg-white text-indigo-600 shadow-sm";
-                darkBtn.className = "py-3 rounded-xl text-[10px] font-black uppercase transition-all text-slate-400 dark:text-slate-500";
-            }
-        }
-        setTheme(currentTheme);
-
-        function toggleSettings() { document.getElementById('settings-panel').classList.toggle('translate-x-full'); }
+        function openNavModal() { document.getElementById('nav-modal').classList.remove('hidden'); }
+        function closeNavModal() { document.getElementById('nav-modal').classList.add('hidden'); }
 
         window.onload = () => {
             let prog = 0;
             const bar = document.getElementById('boot-progress');
             const interval = setInterval(() => {
-                prog += Math.random() * 25;
-                if(prog > 100) prog = 100;
+                prog += 20;
                 bar.style.width = prog + '%';
-                if(prog >= 100) { clearInterval(interval); setTimeout(showSelection, 300); }
-            }, 100);
+                if(prog >= 100) { clearInterval(interval); showSelection(); }
+            }, 150);
         };
 
         function showSelection() {
-            const boot = document.getElementById('boot-screen');
-            const selection = document.getElementById('selection-screen');
-            boot.classList.add('opacity-0', 'pointer-events-none');
-            setTimeout(() => {
-                boot.classList.add('hidden');
-                selection.classList.remove('hidden');
-                setTimeout(() => selection.classList.remove('opacity-0'), 50);
-            }, 700);
+            document.getElementById('boot-screen').classList.add('hidden');
+            document.getElementById('selection-screen').classList.remove('hidden');
+            setTimeout(() => document.getElementById('selection-screen').classList.remove('opacity-0'), 50);
         }
 
         function selectMode(mode) {
             currentMode = mode;
-            const selection = document.getElementById('selection-screen');
-            const loader = document.getElementById('loading-screen');
-            selection.classList.add('opacity-0', 'pointer-events-none');
-            setTimeout(() => {
-                selection.classList.add('hidden');
-                loader.classList.remove('hidden');
-                document.body.className += ` mode-${mode}`;
-                setTimeout(() => loader.classList.remove('opacity-0'), 50);
-                startMapLoading(mode);
-            }, 500);
-        }
-
-        function startMapLoading(mode) {
+            document.getElementById('selection-screen').classList.add('hidden');
+            document.getElementById('loading-screen').classList.remove('hidden');
+            setTimeout(() => document.getElementById('loading-screen').classList.remove('opacity-0'), 50);
+            document.body.className += ` mode-${mode}`;
+            
             let prog = 0;
-            const bar = document.getElementById('progress-bar');
             const interval = setInterval(() => {
-                prog += 10;
-                bar.style.width = prog + '%';
-                if(prog >= 100) { clearInterval(interval); finishLoading(mode); }
-            }, 50);
-        }
-
-        function finishLoading(mode) {
-            const loader = document.getElementById('loading-screen');
-            const app = document.getElementById('app-interface');
-            loader.classList.add('opacity-0', 'pointer-events-none');
-            setTimeout(() => {
-                loader.classList.add('hidden');
-                app.classList.remove('opacity-0', 'pointer-events-none');
-                initMap(mode);
-                updateSavedList();
-            }, 500);
+                prog += 25;
+                document.getElementById('progress-bar').style.width = prog + '%';
+                if(prog >= 100) { 
+                    clearInterval(interval);
+                    document.getElementById('loading-screen').classList.add('hidden');
+                    document.getElementById('app-interface').classList.remove('opacity-0', 'pointer-events-none');
+                    initMap(mode);
+                    updateSavedList();
+                }
+            }, 200);
         }
 
         function initMap(mode) {
             const fallback = [40.7128, -74.0060];
-            map = L.map('map', { zoomControl: mode === 'desktop', attributionControl: false, tap: true }).setView(fallback, 13);
-            const lightLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { className: 'map-tile-light' });
-            const satelliteImagery = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
-            const labelsOverlay = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png');
-            const satelliteGroup = L.layerGroup([satelliteImagery, labelsOverlay]);
-            lightLayer.addTo(map);
-            const baseMaps = { "Street": lightLayer, "Satellite": satelliteGroup };
-            L.control.layers(baseMaps, null, { position: 'topleft' }).addTo(map);
-            polyline = L.polyline([], { color: '#6366f1', weight: 4, dashArray: '5, 10' }).addTo(map);
+            map = L.map('map', { zoomControl: mode === 'desktop', attributionControl: false }).setView(fallback, 13);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { className: 'map-tile-light' }).addTo(map);
             
-            const customIcon = L.divIcon({
-                className: 'custom-div-icon',
-                html: `<div id="marker-orient" style="transform: rotate(0deg); transition: transform 0.2s;"><div class="user-direction-arrow"></div><div class="pulse-ring"></div><div class="user-location-marker" style="width: 14px; height: 14px; position: relative; z-index: 10;"></div></div>`,
-                iconSize: [14, 14], iconAnchor: [7, 7]
-            });
-
-            userMarker = L.marker(fallback, { icon: customIcon }).addTo(map);
-
-            if (window.DeviceOrientationEvent) {
-                window.addEventListener('deviceorientationabsolute', (e) => {
-                    let heading = e.alpha || e.webkitCompassHeading;
-                    if (heading !== undefined) {
-                        userHeading = 360 - heading;
-                        const el = document.getElementById('marker-orient');
-                        if (el) el.style.transform = `rotate(${userHeading}deg)`;
-                    }
-                }, true);
-            }
+            userMarker = L.marker(fallback, { 
+                icon: L.divIcon({
+                    className: 'user-icon',
+                    html: `<div class="pulse-ring"></div><div class="user-location-marker" style="width:14px;height:14px"></div>`,
+                    iconSize: [14, 14], iconAnchor: [7, 7]
+                })
+            }).addTo(map);
 
             if ("geolocation" in navigator) {
-                navigator.geolocation.getCurrentPosition(
-                    (pos) => {
-                        const latlng = [pos.coords.latitude, pos.coords.longitude];
-                        updateLocation(latlng);
-                        if (!initialRecenterDone) { map.flyTo(latlng, 15); initialRecenterDone = true; }
-                    },
-                    () => handleGPSBlocked(),
-                    { enableHighAccuracy: true }
-                );
-                navigator.geolocation.watchPosition(
-                    (pos) => {
-                        const latlng = [pos.coords.latitude, pos.coords.longitude];
-                        updateLocation(latlng);
-                        if (isDriving) { map.panTo(latlng); updateHUD(); }
-                    }, null, { enableHighAccuracy: true }
-                );
+                navigator.geolocation.watchPosition(pos => {
+                    const latlng = [pos.coords.latitude, pos.coords.longitude];
+                    lastKnownPos = latlng;
+                    userMarker.setLatLng(latlng);
+                    if (!initialRecenterDone) { map.flyTo(latlng, 15); initialRecenterDone = true; }
+                }, null, { enableHighAccuracy: true });
             }
 
             map.on('click', (e) => {
                 if (!isDrawing) return;
-                if (startAtLocation && routePath.length === 0 && lastKnownPos) {
-                    routePath.push(lastKnownPos);
-                    markers.push(L.circleMarker(lastKnownPos, { radius: 4, color: '#6366f1', fillOpacity: 1 }).addTo(map));
-                }
                 routePath.push([e.latlng.lat, e.latlng.lng]);
-                markers.push(L.circleMarker(e.latlng, { radius: 6, color: '#6366f1', fillColor: 'white', fillOpacity: 1, weight: 3 }).addTo(map));
+                markers.push(L.circleMarker(e.latlng, { radius: 6, color: '#6366f1', fillColor: 'white', fillOpacity: 1 }).addTo(map));
                 polyline.setLatLngs(routePath);
                 document.getElementById('point-count').innerText = calculateDistance(routePath) + " Mi Total";
             });
+
+            polyline = L.polyline([], { color: '#6366f1', weight: 4, dashArray: '5, 10' }).addTo(map);
         }
 
-        function updateLocation(latlng) {
-            lastKnownPos = latlng;
-            if (userMarker) userMarker.setLatLng(latlng);
-            document.getElementById('tracking-status').className = "w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]";
-            document.getElementById('gps-label').innerText = "Live GPS";
-            document.getElementById('gps-label').className = "text-[9px] font-black text-emerald-500 uppercase";
-            if (!document.getElementById('weather-icon').src) loadWeatherIcon();
-        }
-
-        function handleGPSBlocked() { document.getElementById('tracking-status').className = "w-2 h-2 rounded-full bg-rose-500"; document.getElementById('gps-label').innerText = "GPS Blocked"; }
-        function recenter() { if (lastKnownPos) map.flyTo(lastKnownPos, 15); }
-
+        // UI Handlers
         document.getElementById('new-route-btn').onclick = () => {
-            isDrawing = true; routePath = []; markers.forEach(m => map.removeLayer(m)); markers = []; polyline.setLatLngs([]);
+            isDrawing = true; routePath = []; markers.forEach(m => map.removeLayer(m)); 
+            polyline.setLatLngs([]);
             document.getElementById('new-route-btn').classList.add('hidden');
             document.getElementById('active-controls').classList.remove('hidden');
-            document.getElementById('point-count').innerText = "0.00 Mi Total";
         };
 
         document.getElementById('cancel-draft-btn').onclick = () => {
-            isDrawing = false; markers.forEach(m => map.removeLayer(m)); markers = []; polyline.setLatLngs([]);
+            isDrawing = false;
             document.getElementById('new-route-btn').classList.remove('hidden');
             document.getElementById('active-controls').classList.add('hidden');
         };
@@ -596,34 +489,13 @@
             document.getElementById('name-modal').classList.remove('hidden');
         };
 
-        document.getElementById('close-modal-btn').onclick = () => document.getElementById('name-modal').classList.add('hidden');
-
         document.getElementById('confirm-save-btn').onclick = () => {
             const name = document.getElementById('route-name-input').value || "Unnamed Route";
-            const newRoute = { id: Date.now(), name, distance: calculateDistance(routePath), path: routePath, date: new Date().toLocaleDateString() };
-            savedRoutes.push(newRoute);
+            savedRoutes.push({ id: Date.now(), name, distance: calculateDistance(routePath), path: routePath, date: new Date().toLocaleDateString() });
             localStorage.setItem('saved_routes', JSON.stringify(savedRoutes));
             updateSavedList();
-            isDrawing = false; markers.forEach(m => map.removeLayer(m)); markers = []; polyline.setLatLngs([]);
-            document.getElementById('new-route-btn').classList.remove('hidden');
-            document.getElementById('active-controls').classList.add('hidden');
             document.getElementById('name-modal').classList.add('hidden');
-            document.getElementById('route-name-input').value = "";
-        };
-
-        window.deleteRoute = (id) => {
-            savedRoutes = savedRoutes.filter(r => r.id !== id);
-            localStorage.setItem('saved_routes', JSON.stringify(savedRoutes));
-            updateSavedList();
-            if (activeViewLine) map.removeLayer(activeViewLine);
-        };
-
-        window.viewRoute = (id) => {
-            const r = savedRoutes.find(x => x.id === id);
-            if (!r) return;
-            if (activeViewLine) map.removeLayer(activeViewLine);
-            activeViewLine = L.polyline(r.path, { color: '#db2777', weight: 6, opacity: 0.8 }).addTo(map);
-            map.fitBounds(activeViewLine.getBounds(), { padding: [50, 50] });
+            document.getElementById('cancel-draft-btn').click();
         };
 
         function updateSavedList() {
@@ -631,123 +503,44 @@
             list.innerHTML = "";
             [...savedRoutes].reverse().forEach(r => {
                 const div = document.createElement('div');
-                div.className = "bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 hover:border-indigo-200 dark:hover:border-indigo-900 transition-all group";
+                div.className = "bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800";
                 div.innerHTML = `
                     <div class="flex justify-between items-start mb-2">
                         <div>
                             <h4 class="text-xs font-black uppercase dark:text-white">${r.name}</h4>
-                            <p class="text-[9px] font-bold text-slate-400 mt-0.5">${r.date} • ${r.distance} Mi</p>
+                            <p class="text-[9px] font-bold text-slate-400 mt-0.5">${r.distance} Mi</p>
                         </div>
-                        <button onclick="deleteRoute(${r.id})" class="text-slate-300 hover:text-rose-500 transition-colors opacity-0 group-hover:opacity-100"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
                     </div>
                     <div class="flex gap-2 mt-3">
                         <button onclick="viewRoute(${r.id})" class="flex-grow bg-white dark:bg-slate-700 py-2 rounded-xl text-[9px] font-black uppercase border border-slate-200 dark:border-slate-600 dark:text-white">View</button>
-                        <button onclick="enterDriveMode(${r.id})" class="flex-grow bg-indigo-600 text-white py-2 rounded-xl text-[9px] font-black uppercase shadow-lg shadow-indigo-500/20">Go</button>
+                        <button onclick="enterDriveMode(${r.id})" class="flex-grow bg-indigo-600 text-white py-2 rounded-xl text-[9px] font-black uppercase">Go</button>
                     </div>`;
                 list.appendChild(div);
             });
         }
 
-        async function loadWeatherIcon() {
-            if (!lastKnownPos) return;
-            try {
-                const [lat, lon] = lastKnownPos;
-                const apiKey = '150ba377c3ca4474889150133260503';
-                const weatherRes = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}`);
-                if (!weatherRes.ok) return;
-                const data = await weatherRes.json();
-                const iconCode = data.weather?.[0]?.icon;
-                if (iconCode) {
-                    document.getElementById('weather-icon').src = `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
-                    document.getElementById('weather-indicator').classList.remove('hidden');
-                }
-            } catch (err) {}
+        window.viewRoute = (id) => {
+            const r = savedRoutes.find(x => x.id === id);
+            if (activeViewLine) map.removeLayer(activeViewLine);
+            activeViewLine = L.polyline(r.path, { color: '#db2777', weight: 6 }).addTo(map);
+            map.fitBounds(activeViewLine.getBounds());
+        };
+
+        window.enterDriveMode = (id) => {
+            window.viewRoute(id);
+            document.getElementById('drive-hud').classList.remove('hidden');
+            if (currentMode === 'mobile') toggleSidebarCollapse();
+        };
+
+        function exitDriveMode() {
+            document.getElementById('drive-hud').classList.add('hidden');
+            if (activeViewLine) map.removeLayer(activeViewLine);
         }
 
-        function openNavModal() { document.getElementById('nav-modal').classList.remove('hidden'); }
-        function closeNavModal() { document.getElementById('nav-modal').classList.add('hidden'); }
+        function recenter() { if (lastKnownPos) map.flyTo(lastKnownPos, 15); }
+        function setTheme(t) { document.documentElement.classList.toggle('dark', t === 'dark'); }
+        function toggleSettings() { document.getElementById('settings-panel').classList.toggle('translate-x-full'); }
 
-        function selectVehicle(type) {
-            selectedVehicle = type;
-            document.querySelectorAll('.v-btn').forEach(btn => btn.classList.remove('border-indigo-500', 'bg-indigo-50', 'dark:bg-indigo-900/20'));
-            document.getElementById(`v-${type}`).classList.add('border-indigo-500', 'bg-indigo-50', 'dark:bg-indigo-900/20');
-            const ebikeDiv = document.getElementById('ebike-options');
-            type === 'ebike' ? ebikeDiv.classList.remove('hidden') : ebikeDiv.classList.add('hidden');
-        }
-
-        async function calculateSmartRoute() {
-            const destQuery = document.getElementById('nav-destination').value;
-            if (!destQuery || !lastKnownPos) return alert("Need your location and a destination!");
-
-            try {
-                // 1. Geocode Destination
-                const searchRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(destQuery)}`);
-                const searchData = await searchRes.json();
-                if (searchData.length === 0) return alert("Destination not found.");
-                
-                const destCoords = [searchData[0].lon, searchData[0].lat];
-                const startCoords = [lastKnownPos[1], lastKnownPos[0]];
-                
-                // 2. Calibrate Routing Profile based on Vehicle Safety
-                let profile = 'car'; 
-                let vehicleLabel = selectedVehicle;
-
-                if (selectedVehicle === 'bike') {
-                    // Prioritizes bike lanes and avoids high-speed traffic
-                    profile = 'bicycle'; 
-                } 
-                else if (selectedVehicle === 'escooter') {
-                    // Forces routing through residential areas and paths; strictly avoids main roads
-                    profile = 'foot'; 
-                } 
-                else if (selectedVehicle === 'ebike') {
-                    const speed = parseInt(document.getElementById('ebike-speed').value);
-                    // If speed is high, use road-based routing; if low, stay on bike paths
-                    profile = speed >= 28 ? 'car' : 'bicycle';
-                    vehicleLabel = `E-Bike (${speed} MPH)`;
-                }
-
-                // 3. Fetch Optimized Route
-                const routeRes = await fetch(`https://router.project-osrm.org/route/v1/${profile}/${startCoords.join(',')};${destCoords.join(',')}?overview=full&geometries=geojson`);
-                const routeData = await routeRes.json();
-
-                if (routeData.code !== 'Ok') {
-                    return alert("No suitable path found for this vehicle type. Try a different transport mode.");
-                }
-
-                // 4. Render and Save
-                const coords = routeData.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
-                
-                if (activeViewLine) map.removeLayer(activeViewLine);
-                activeViewLine = L.polyline(coords, { 
-                    color: selectedVehicle === 'car' ? '#4f46e5' : '#10b981', 
-                    weight: 6, 
-                    opacity: 0.8 
-                }).addTo(map);
-                
-                map.fitBounds(activeViewLine.getBounds(), { padding: [50, 50] });
-
-                const smartRoute = { 
-                    id: Date.now(), 
-                    name: `To ${destQuery.split(',')[0]} (${vehicleLabel})`, 
-                    distance: (routeData.routes[0].distance * 0.000621371).toFixed(2), 
-                    path: coords, 
-                    date: new Date().toLocaleDateString() 
-                };
-
-                savedRoutes.push(smartRoute);
-                localStorage.setItem('saved_routes', JSON.stringify(savedRoutes));
-                updateSavedList();
-                closeNavModal();
-                
-                // Automatically start guidance
-                enterDriveMode(smartRoute.id);
-
-            } catch (err) { 
-                console.error("Routing Error:", err); 
-                alert("System error creating road route."); 
-            }
-        }
     </script>
 </body>
 </html>
