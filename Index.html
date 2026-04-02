@@ -664,7 +664,6 @@
             } catch (err) {}
         }
 
-        // --- QUICK NAV LOGIC ---
         function openNavModal() { document.getElementById('nav-modal').classList.remove('hidden'); }
         function closeNavModal() { document.getElementById('nav-modal').classList.add('hidden'); }
 
@@ -679,46 +678,75 @@
         async function calculateSmartRoute() {
             const destQuery = document.getElementById('nav-destination').value;
             if (!destQuery || !lastKnownPos) return alert("Need your location and a destination!");
+
             try {
+                // 1. Geocode Destination
                 const searchRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(destQuery)}`);
                 const searchData = await searchRes.json();
                 if (searchData.length === 0) return alert("Destination not found.");
+                
                 const destCoords = [searchData[0].lon, searchData[0].lat];
                 const startCoords = [lastKnownPos[1], lastKnownPos[0]];
                 
-                // Vehicle Logic
-                let profile = 'car';
-                if (selectedVehicle === 'bike') profile = 'bicycle';
-                if (selectedVehicle === 'escooter') profile = 'foot'; // Use pedestrian paths for safety
-                if (selectedVehicle === 'ebike') {
-                    const speed = document.getElementById('ebike-speed').value;
-                    profile = parseInt(speed) >= 28 ? 'car' : 'bicycle'; // High speed EBikes use roads
+                // 2. Calibrate Routing Profile based on Vehicle Safety
+                let profile = 'car'; 
+                let vehicleLabel = selectedVehicle;
+
+                if (selectedVehicle === 'bike') {
+                    // Prioritizes bike lanes and avoids high-speed traffic
+                    profile = 'bicycle'; 
+                } 
+                else if (selectedVehicle === 'escooter') {
+                    // Forces routing through residential areas and paths; strictly avoids main roads
+                    profile = 'foot'; 
+                } 
+                else if (selectedVehicle === 'ebike') {
+                    const speed = parseInt(document.getElementById('ebike-speed').value);
+                    // If speed is high, use road-based routing; if low, stay on bike paths
+                    profile = speed >= 28 ? 'car' : 'bicycle';
+                    vehicleLabel = `E-Bike (${speed} MPH)`;
                 }
 
-                // OSRM API call for road-snapped routing
+                // 3. Fetch Optimized Route
                 const routeRes = await fetch(`https://router.project-osrm.org/route/v1/${profile}/${startCoords.join(',')};${destCoords.join(',')}?overview=full&geometries=geojson`);
                 const routeData = await routeRes.json();
-                if (routeData.code !== 'Ok') return alert("No road route found.");
-                
+
+                if (routeData.code !== 'Ok') {
+                    return alert("No suitable path found for this vehicle type. Try a different transport mode.");
+                }
+
+                // 4. Render and Save
                 const coords = routeData.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
-                if (activeViewLine) map.removeLayer(activeViewLine);
-                activeViewLine = L.polyline(coords, { color: '#4f46e5', weight: 6, opacity: 0.8 }).addTo(map);
-                map.fitBounds(activeViewLine.getBounds(), { padding: [50, 50] });
                 
+                if (activeViewLine) map.removeLayer(activeViewLine);
+                activeViewLine = L.polyline(coords, { 
+                    color: selectedVehicle === 'car' ? '#4f46e5' : '#10b981', 
+                    weight: 6, 
+                    opacity: 0.8 
+                }).addTo(map);
+                
+                map.fitBounds(activeViewLine.getBounds(), { padding: [50, 50] });
+
                 const smartRoute = { 
                     id: Date.now(), 
-                    name: `To ${destQuery.split(',')[0]} (${selectedVehicle})`, 
+                    name: `To ${destQuery.split(',')[0]} (${vehicleLabel})`, 
                     distance: (routeData.routes[0].distance * 0.000621371).toFixed(2), 
                     path: coords, 
                     date: new Date().toLocaleDateString() 
                 };
-                
+
                 savedRoutes.push(smartRoute);
                 localStorage.setItem('saved_routes', JSON.stringify(savedRoutes));
                 updateSavedList();
                 closeNavModal();
+                
+                // Automatically start guidance
                 enterDriveMode(smartRoute.id);
-            } catch (err) { console.error(err); alert("Error creating road route."); }
+
+            } catch (err) { 
+                console.error("Routing Error:", err); 
+                alert("System error creating road route."); 
+            }
         }
     </script>
 </body>
