@@ -685,21 +685,34 @@
                 if (searchData.length === 0) return alert("Destination not found.");
                 const destCoords = [searchData[0].lon, searchData[0].lat];
                 const startCoords = [lastKnownPos[1], lastKnownPos[0]];
+                
+                // Vehicle Logic
                 let profile = 'car';
                 if (selectedVehicle === 'bike') profile = 'bicycle';
-                if (selectedVehicle === 'escooter') profile = 'foot';
+                if (selectedVehicle === 'escooter') profile = 'foot'; // Use pedestrian paths for safety
                 if (selectedVehicle === 'ebike') {
                     const speed = document.getElementById('ebike-speed').value;
-                    profile = speed > 25 ? 'car' : 'bicycle';
+                    profile = parseInt(speed) >= 28 ? 'car' : 'bicycle'; // High speed EBikes use roads
                 }
+
+                // OSRM API call for road-snapped routing
                 const routeRes = await fetch(`https://router.project-osrm.org/route/v1/${profile}/${startCoords.join(',')};${destCoords.join(',')}?overview=full&geometries=geojson`);
                 const routeData = await routeRes.json();
                 if (routeData.code !== 'Ok') return alert("No road route found.");
+                
                 const coords = routeData.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
                 if (activeViewLine) map.removeLayer(activeViewLine);
                 activeViewLine = L.polyline(coords, { color: '#4f46e5', weight: 6, opacity: 0.8 }).addTo(map);
                 map.fitBounds(activeViewLine.getBounds(), { padding: [50, 50] });
-                const smartRoute = { id: Date.now(), name: `To ${destQuery.split(',')[0]} (${selectedVehicle})`, distance: (routeData.routes[0].distance * 0.000621371).toFixed(2), path: coords, date: new Date().toLocaleDateString() };
+                
+                const smartRoute = { 
+                    id: Date.now(), 
+                    name: `To ${destQuery.split(',')[0]} (${selectedVehicle})`, 
+                    distance: (routeData.routes[0].distance * 0.000621371).toFixed(2), 
+                    path: coords, 
+                    date: new Date().toLocaleDateString() 
+                };
+                
                 savedRoutes.push(smartRoute);
                 localStorage.setItem('saved_routes', JSON.stringify(savedRoutes));
                 updateSavedList();
