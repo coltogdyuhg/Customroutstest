@@ -137,7 +137,7 @@
     </div>
 
     <div id="name-modal" class="fixed inset-0 z-[1000] hidden flex items-center justify-center p-6 bg-slate-950/60 backdrop-blur-sm">
-        <div class="bg-white dark:bg-slate-800 w-full max-sm rounded-[2.5rem] p-8 shadow-2xl space-y-6 border border-slate-200 dark:border-slate-700">
+        <div class="bg-white dark:bg-slate-800 w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl space-y-6 border border-slate-200 dark:border-slate-700">
             <div class="space-y-2">
                 <h3 class="text-xl font-black italic uppercase tracking-tighter dark:text-white">Name Your Route</h3>
                 <p id="modal-dist" class="text-[10px] text-indigo-500 font-bold uppercase tracking-widest">Total Distance: 0.00 miles</p>
@@ -310,8 +310,6 @@
     </div>
 
     <script>
-        const GEMINI_API_KEY = "AIzaSyCGCDPjwx8xhbg_3dNJEFV3dtp-TBOWp8w";
-        
         let map, polyline, markers = [], routePath = [];
         let isDrawing = false, userMarker = null, searchMarker = null;
         let savedRoutes = JSON.parse(localStorage.getItem('saved_routes')) || [];
@@ -325,6 +323,9 @@
         let startAtLocation = false;
         let userHeading = 0;
         let selectedVehicle = 'car';
+
+        // Gemini Config
+        const API_KEY = "AIzaSyAs9YXzxXzM2MHY848KtFXaoKRIGVf1AzI";
 
         function syncToggles(el) {
             startAtLocation = el.checked;
@@ -678,74 +679,75 @@
             type === 'ebike' ? ebikeDiv.classList.remove('hidden') : ebikeDiv.classList.add('hidden');
         }
 
-        async function calculateSmartRoute() {
-            const destQuery = document.getElementById('nav-destination').value;
-            if (!destQuery || !lastKnownPos) return alert("Need your location and a destination!");
+        // Gemini Calibration Helper
+        async function calibrateWithGemini(vehicle, speed) {
+            const prompt = `Act as a GPS calibrator. User is on a ${vehicle} going ${speed}mph. 
+            Suggest if we should: avoid highways, prefer bike lanes, or use main roads. 
+            Return JSON: {"mode": "BICYCLE|DRIVE|TWO_WHEELER", "avoidHighways": boolean, "tip": "string"}`;
 
             try {
-                const ebikeSpeed = document.getElementById('ebike-speed').value;
-                
-                // 1. Gemini Analysis with "Yellow Line" Safety Logic
-                const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{
-                            parts: [{
-                                text: `You are a safety-first GPS engine. The user is on a ${selectedVehicle} (${ebikeSpeed} MPH).
-                                
-                                CRITICAL SAFETY RULE: 
-                                Vehicles like e-scooters and bikes MUST NOT go on roads with double yellow lines. 
-                                In mapping terms, this means avoiding 'primary' and 'secondary' roads.
-                                
-                                Instructions:
-                                - For E-Scooter/Bike: Use 'foot' or 'bicycle' profile. Output instructions to ONLY use residential or service roads.
-                                - For E-Bike: If speed < 25mph, treat as Bike. If > 25mph, use 'car' profile but avoid 'motorway' and 'primary' roads.
-                                - For Car: Use 'car' profile (standard).
-                                
-                                Return ONLY JSON: {"profile": "car|bicycle|foot", "exclude_highways": true, "logic": "explanation"}`
-                            }]
-                        }]
-                    })
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
                 });
+                const data = await response.json();
+                const text = data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim();
+                return JSON.parse(text);
+            } catch (e) {
+                return { mode: vehicle === 'bike' ? 'BICYCLE' : 'DRIVE', avoidHighways: true, tip: "Ride safely!" };
+            }
+        }
 
-                const geminiData = await geminiResponse.json();
-                const advice = JSON.parse(geminiData.candidates[0].content.parts[0].text);
+        async function calculateSmartRoute() {
+            const destQuery = document.getElementById('nav-destination').value;
+            const speed = document.getElementById('ebike-speed').value || 20;
+            
+            if (!destQuery || !lastKnownPos) return alert("Need your location and a destination!");
 
-                // 2. Geocode Destination
+            // Update loading status
+            const originalLabel = document.getElementById('gps-label').innerText;
+            document.getElementById('gps-label').innerText = "Gemini Calibrating...";
+
+            try {
+                // 1. Get Destination Coords
                 const searchRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(destQuery)}`);
                 const searchData = await searchRes.json();
-                if (searchData.length === 0) return alert("Destination not found.");
+                if (searchData.length === 0) throw new Error("Destination not found.");
                 
-                const destCoords = [searchData[0].lon, searchData[0].lat];
+                const destCoords = [parseFloat(searchData[0].lon), parseFloat(searchData[0].lat)];
                 const startCoords = [lastKnownPos[1], lastKnownPos[0]];
 
-                // 3. Fetch OSRM Route
-                let osrmUrl = `https://router.project-osrm.org/route/v1/${advice.profile}/${startCoords.join(',')};${destCoords.join(',')}?overview=full&geometries=geojson`;
-                
-                const routeRes = await fetch(osrmUrl);
+                // 2. Calibrate with Gemini
+                const calibration = await calibrateWithGemini(selectedVehicle, speed);
+                alert(`Gemini Calibration: ${calibration.tip}`);
+
+                // 3. Routing parameters
+                let profile = calibration.mode.toLowerCase(); 
+                if(profile === 'drive') profile = 'car';
+                if(profile === 'two_wheeler') profile = 'car'; // OSRM default profile mapping
+
+                let routeOptions = "";
+                if (calibration.avoidHighways || selectedVehicle === 'escooter') {
+                    routeOptions = "&exclude=motorway";
+                }
+
+                // 4. Fetch actual route
+                const routeRes = await fetch(`https://router.project-osrm.org/route/v1/${profile}/${startCoords.join(',')};${destCoords.join(',')}?overview=full&geometries=geojson${routeOptions}`);
                 const routeData = await routeRes.json();
 
-                if (routeData.code !== 'Ok') return alert("No safe side-street route found.");
+                if (routeData.code !== 'Ok') throw new Error("No road route found.");
 
-                // 4. Map Display
                 const coords = routeData.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+                
+                // 5. Render and Save
                 if (activeViewLine) map.removeLayer(activeViewLine);
-                
-                const routeColor = (advice.profile === 'car') ? '#4f46e5' : '#10b981';
-                
-                activeViewLine = L.polyline(coords, { 
-                    color: routeColor, 
-                    weight: 6, 
-                    opacity: 0.8,
-                    dashArray: advice.profile === 'foot' ? '1, 10' : null 
-                }).addTo(map);
-                
+                activeViewLine = L.polyline(coords, { color: '#4f46e5', weight: 6, opacity: 0.8 }).addTo(map);
                 map.fitBounds(activeViewLine.getBounds(), { padding: [50, 50] });
 
                 const smartRoute = { 
                     id: Date.now(), 
-                    name: `Safe Route: ${destQuery.split(',')[0]}`, 
+                    name: `To ${destQuery.split(',')[0]} (${selectedVehicle})`, 
                     distance: (routeData.routes[0].distance * 0.000621371).toFixed(2), 
                     path: coords, 
                     date: new Date().toLocaleDateString() 
@@ -757,9 +759,11 @@
                 closeNavModal();
                 enterDriveMode(smartRoute.id);
 
-            } catch (err) {
-                console.error(err);
-                alert("Safety routing unavailable. Check your API key or connection.");
+            } catch (err) { 
+                console.error(err); 
+                alert("Error: " + err.message); 
+            } finally {
+                document.getElementById('gps-label').innerText = originalLabel;
             }
         }
     </script>
