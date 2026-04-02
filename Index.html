@@ -5,37 +5,130 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>CustomRoutes - Navigator Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <script>
         tailwind.config = {
             darkMode: 'class',
-            theme: { extend: { colors: { darkBg: '#0f172a', darkCard: '#1e293b' } } }
+            theme: {
+                extend: {
+                    colors: {
+                        darkBg: '#0f172a',
+                        darkCard: '#1e293b'
+                    }
+                }
+            }
         }
     </script>
 
     <style>
         :root { --header-h: 64px; }
         #map { height: calc(100vh - var(--header-h)); width: 100%; background: #0f172a; z-index: 1; }
-        .mode-mobile #sidebar { position: fixed; bottom: 0; left: 0; width: 100% !important; z-index: 50; transition: transform 0.4s; border-radius: 2rem 2rem 0 0; }
-        .mode-mobile #sidebar.is-collapsed { transform: translateY(calc(100% - 70px)); }
+        
+        .mode-mobile #sidebar {
+            position: fixed; bottom: 0; left: 0; width: 100% !important;
+            height: auto !important; 
+            z-index: 50;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 2rem 2rem 0 0;
+        }
+
+        .mode-mobile #sidebar.is-collapsed {
+            transform: translateY(calc(100% - 70px));
+        }
+
         .mode-desktop #sidebar { width: 22rem; height: 100%; }
+
         .gradient-header { background: linear-gradient(90deg, #4f46e5 0%, #7c3aed 50%, #db2777 100%); }
-        .hero-pattern { background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); }
-        .user-location-marker { background: #4f46e5; border: 3px solid white; border-radius: 50%; box-shadow: 0 0 10px rgba(0,0,0,0.2); }
-        .user-direction-arrow { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-bottom: 10px solid #4f46e5; }
-        .pulse-ring { position: absolute; top: 50%; left: 50%; width: 14px; height: 14px; margin-top: -7px; margin-left: -7px; border-radius: 50%; background: rgba(79, 70, 229, 0.4); animation: pulse-animation 2s infinite; }
-        @keyframes pulse-animation { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(4); opacity: 0; } }
-        .search-pin-drop { animation: pin-drop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        @keyframes pin-drop { 0% { transform: translateY(-40px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
+        .hero-pattern {
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+
+        .user-location-marker {
+            background: #4f46e5; 
+            border: 3px solid white; 
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+        }
+
+        .user-direction-arrow {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-bottom: 10px solid #4f46e5;
+            filter: drop-shadow(0 -2px 2px rgba(0,0,0,0.2));
+        }
+
+        .pulse-ring {
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 14px; height: 14px;
+            margin-top: -7px; margin-left: -7px;
+            border-radius: 50%;
+            background: rgba(79, 70, 229, 0.4);
+            animation: pulse-animation 2s infinite;
+        }
+        @keyframes pulse-animation {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(4); opacity: 0; }
+        }
+
+        .search-pin-drop {
+            animation: pin-drop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes pin-drop {
+            0% { transform: translateY(-40px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+        .leaflet-container { background: transparent !important; }
         .dark .map-tile-light { filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3); }
-        .switch { position: relative; display: inline-block; width: 40px; height: 20px; }
+        .dark .leaflet-container { background: #0f172a !important; }
+
+        #mobile-drag-handle { display: none; }
+        .mode-mobile #mobile-drag-handle { display: flex; }
+
+        .leaflet-control-layers { border-radius: 12px !important; border: none !important; box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important; padding: 5px !important; }
+        
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 20px;
+        }
         .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .4s; border-radius: 34px; }
-        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #cbd5e1;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 14px; width: 14px;
+            left: 3px; bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
         input:checked + .slider { background-color: #4f46e5; }
         input:checked + .slider:before { transform: translateX(20px); }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
     </style>
 </head>
 <body class="bg-slate-50 dark:bg-slate-950 overflow-hidden font-sans text-slate-900 transition-colors duration-300">
@@ -47,12 +140,22 @@
                 <span id="hud-heading" class="text-lg font-black italic tabular-nums">--</span>
             </div>
             <div class="flex flex-col border-r border-white/10 pr-4">
-                <span class="text-[8px] font-black uppercase tracking-widest text-indigo-400">Remaining</span>
+                <span class="text-[8px] font-black uppercase tracking-widest text-indigo-400">Distance</span>
                 <span id="hud-miles" class="text-lg font-black italic tabular-nums">0.00 Mi</span>
             </div>
-            <div class="flex flex-col items-center">
-                <span class="text-[8px] font-black uppercase tracking-widest text-emerald-400">ETA</span>
-                <span id="hud-time-bike" class="text-sm font-black italic tabular-nums">--m</span>
+            <div class="flex gap-4">
+                <div class="flex flex-col items-center">
+                    <span class="text-[8px] font-black uppercase tracking-widest text-indigo-400">Drive</span>
+                    <span id="hud-time-car" class="text-sm font-black italic tabular-nums">--m</span>
+                </div>
+                <div class="flex flex-col items-center">
+                    <span class="text-[8px] font-black uppercase tracking-widest text-emerald-400">Bike</span>
+                    <span id="hud-time-bike" class="text-sm font-black italic tabular-nums">--m</span>
+                </div>
+                <div class="flex flex-col items-center">
+                    <span class="text-[8px] font-black uppercase tracking-widest text-pink-400">Walk</span>
+                    <span id="hud-time-walk" class="text-sm font-black italic tabular-nums">--m</span>
+                </div>
             </div>
             <button onclick="exitDriveMode()" class="bg-rose-500/20 text-rose-500 p-2 rounded-xl hover:bg-rose-500 hover:text-white transition-all">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
@@ -60,38 +163,15 @@
         </div>
     </div>
 
-    <div id="trip-planner-modal" class="fixed inset-0 z-[2100] hidden flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-md">
-        <div class="bg-white dark:bg-slate-900 w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl space-y-6 border border-slate-200 dark:border-slate-800">
-            <h3 class="text-2xl font-black italic uppercase tracking-tighter dark:text-white text-center">Where to?</h3>
-            <div class="space-y-4">
-                <div>
-                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Select Vehicle</label>
-                    <select id="vehicle-type" onchange="toggleEbikeOptions()" class="w-full mt-2 p-4 bg-slate-100 dark:bg-slate-800 border-none rounded-2xl text-xs font-bold dark:text-white outline-none ring-2 ring-transparent focus:ring-indigo-500">
-                        <option value="car">Car (Main Roads)</option>
-                        <option value="bicycle">Normal Bike (Cycling Paths)</option>
-                        <option value="escooter">E-Scooter (Avoid Busy Roads)</option>
-                        <option value="ebike">E-Bike (Custom Speed)</option>
-                    </select>
-                </div>
-                <div id="ebike-speed-box" class="hidden">
-                    <label class="text-[10px] font-black text-indigo-500 uppercase tracking-widest ml-2">Max Speed (MPH)</label>
-                    <input type="number" id="ebike-speed" value="20" class="w-full mt-2 p-4 bg-indigo-50 dark:bg-slate-800 border-none rounded-2xl text-xs font-bold dark:text-white outline-none">
-                </div>
-            </div>
-            <div class="flex gap-3 pt-4">
-                <button onclick="startSmartRouting()" class="flex-grow bg-indigo-600 text-white py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg">Start Planning</button>
-                <button onclick="closeTripPlanner()" class="px-6 bg-slate-100 dark:bg-slate-800 text-slate-500 py-4 rounded-2xl font-black uppercase text-[10px]">Cancel</button>
-            </div>
-        </div>
-    </div>
-
     <div id="name-modal" class="fixed inset-0 z-[1000] hidden flex items-center justify-center p-6 bg-slate-950/60 backdrop-blur-sm">
         <div class="bg-white dark:bg-slate-800 w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl space-y-6 border border-slate-200 dark:border-slate-700">
-            <h3 class="text-xl font-black italic uppercase tracking-tighter dark:text-white">Name Your Route</h3>
-            <p id="modal-dist" class="text-[10px] text-indigo-500 font-bold uppercase tracking-widest">Total Distance: 0.00 miles</p>
-            <input id="route-name-input" type="text" placeholder="e.g. Work Commute" class="w-full p-4 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-bold outline-none focus:ring-2 ring-indigo-500 dark:text-white">
+            <div class="space-y-2">
+                <h3 class="text-xl font-black italic uppercase tracking-tighter dark:text-white">Name Your Route</h3>
+                <p id="modal-dist" class="text-[10px] text-indigo-500 font-bold uppercase tracking-widest">Total Distance: 0.00 miles</p>
+            </div>
+            <input id="route-name-input" type="text" placeholder="e.g. Morning Run" class="w-full p-4 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-bold outline-none focus:ring-2 ring-indigo-500 dark:text-white">
             <div class="flex gap-3">
-                <button id="confirm-save-btn" class="flex-grow bg-indigo-600 text-white py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest">Save Path</button>
+                <button id="confirm-save-btn" class="flex-grow bg-indigo-600 text-white py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-lg shadow-indigo-500/20">Save Path</button>
                 <button id="close-modal-btn" class="px-6 bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-300 py-4 rounded-2xl font-black uppercase text-[10px]">Cancel</button>
             </div>
         </div>
@@ -100,9 +180,16 @@
     <div id="boot-screen" class="fixed inset-0 z-[300] flex flex-col items-center justify-center p-6 text-center transition-all duration-700">
         <div class="absolute inset-0 hero-pattern bg-slate-950"></div>
         <div class="relative max-w-md w-full space-y-8">
-            <div class="w-16 h-16 bg-indigo-600 rounded-2xl mx-auto flex items-center justify-center animate-bounce"><svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg></div>
-            <h2 class="text-3xl font-black text-white italic uppercase tracking-tighter">CustomRoutes</h2>
-            <div class="relative w-full bg-white/5 h-1.5 rounded-full overflow-hidden"><div id="boot-progress" class="h-full bg-indigo-500 w-0 transition-all duration-200"></div></div>
+            <div class="space-y-3">
+                <div class="w-16 h-16 bg-indigo-600 rounded-2xl mx-auto flex items-center justify-center shadow-2xl shadow-indigo-500/20 animate-bounce">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                </div>
+                <h2 class="text-3xl font-black text-white italic uppercase tracking-tighter">CustomRoutes</h2>
+                <p class="text-indigo-400 text-[10px] font-black uppercase tracking-[0.4em]" id="boot-label">System Initializing...</p>
+            </div>
+            <div class="relative w-full bg-white/5 h-1.5 rounded-full overflow-hidden border border-white/5">
+                <div id="boot-progress" class="h-full bg-indigo-500 w-0 transition-all duration-200 ease-out"></div>
+            </div>
         </div>
     </div>
 
@@ -111,14 +198,29 @@
         <div class="relative z-10 w-full max-w-xl text-center space-y-8">
             <h1 class="text-4xl font-black text-white italic uppercase tracking-tighter">Choose Interface</h1>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <button onclick="selectMode('desktop')" class="group p-8 bg-white/5 hover:bg-white/10 border border-white/10 rounded-[2.5rem] flex flex-col items-center gap-4">
-                    <div class="p-4 bg-indigo-500 rounded-2xl text-white"><svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2-2v10a2 2 0 002 2z" /></svg></div>
-                    <h3 class="text-white font-black uppercase text-sm">Desktop</h3>
+                <button onclick="selectMode('desktop')" class="group p-8 bg-white/5 hover:bg-white/10 border border-white/10 rounded-[2.5rem] transition-all flex flex-col items-center gap-4">
+                    <div class="p-4 bg-indigo-500 rounded-2xl text-white shadow-xl shadow-indigo-500/20 group-hover:scale-110 transition-transform">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2-2v10a2 2 0 002 2z" /></svg>
+                    </div>
+                    <h3 class="text-white font-black uppercase text-sm">Desktop Optimization</h3>
                 </button>
-                <button onclick="selectMode('mobile')" class="group p-8 bg-white/5 hover:bg-white/10 border border-white/10 rounded-[2.5rem] flex flex-col items-center gap-4">
-                    <div class="p-4 bg-pink-500 rounded-2xl text-white"><svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2-2v14a2 2 0 002 2z" /></svg></div>
-                    <h3 class="text-white font-black uppercase text-sm">Mobile</h3>
+                <button onclick="selectMode('mobile')" class="group p-8 bg-white/5 hover:bg-white/10 border border-white/10 rounded-[2.5rem] transition-all flex flex-col items-center gap-4">
+                    <div class="p-4 bg-pink-500 rounded-2xl text-white shadow-xl shadow-pink-500/20 group-hover:scale-110 transition-transform">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2-2v14a2 2 0 002 2z" /></svg>
+                    </div>
+                    <h3 class="text-white font-black uppercase text-sm">Mobile Experience</h3>
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="loading-screen" class="fixed inset-0 z-[100] hidden flex flex-col items-center justify-center p-6 text-center transition-all duration-500 opacity-0">
+        <div class="absolute inset-0 hero-pattern bg-slate-950"></div>
+        <div class="relative max-w-md w-full space-y-10">
+            <h2 class="text-2xl font-black text-white italic uppercase tracking-tighter">Syncing Satellites</h2>
+            <p class="text-emerald-400 text-[10px] font-black uppercase tracking-[0.3em]" id="status-label">Acquiring Precision GPS...</p>
+            <div class="relative w-full bg-white/5 h-2 rounded-full overflow-hidden border border-white/5">
+                <div id="progress-bar" class="h-full bg-gradient-to-r from-indigo-500 to-pink-500 w-0 transition-all duration-300"></div>
             </div>
         </div>
     </div>
@@ -126,221 +228,240 @@
     <div id="app-interface" class="opacity-0 pointer-events-none transition-opacity duration-1000 flex flex-col h-screen">
         <header class="h-16 gradient-header flex items-center justify-between px-6 shadow-lg z-30 shrink-0">
             <h1 class="text-white font-black text-xl tracking-tighter italic uppercase">CustomRoutes</h1>
-            <div class="flex flex-grow max-w-md mx-8 relative">
-                <input id="global-search" type="text" placeholder="Search places..." class="w-full bg-white/10 border border-white/20 rounded-full py-2 px-10 text-xs text-white outline-none">
-                <svg class="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            <div class="flex flex-grow max-w-md mx-4 md:mx-8 relative">
+                <input id="global-search" type="text" placeholder="Search cities..." class="w-full bg-white/10 border border-white/20 rounded-full py-2 px-10 text-xs text-white placeholder-white/60 focus:bg-white/20 outline-none transition-all">
+                <svg class="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
             </div>
             <div id="weather-indicator" class="hidden w-7 h-7 flex items-center justify-center rounded-full bg-white/10 border border-white/20">
-                <img id="weather-icon" src="" class="w-5 h-5">
+                <img id="weather-icon" src="" alt="Weather" class="w-5 h-5 opacity-90">
             </div>
         </header>
 
         <main id="main-container" class="flex flex-grow overflow-hidden relative">
-            <div id="sidebar" class="bg-white dark:bg-slate-900 shadow-2xl flex flex-col z-20 border-r border-slate-100 dark:border-slate-800">
-                <div id="mobile-drag-handle" onclick="toggleSidebarCollapse()" class="flex flex-col items-center justify-center py-2 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 cursor-pointer">
+            <div id="sidebar" class="bg-white dark:bg-slate-900 shadow-2xl flex flex-col z-20 border-r dark:border-slate-800">
+                <div id="mobile-drag-handle" onclick="toggleSidebarCollapse()" class="flex flex-col items-center justify-center py-2 bg-slate-50 dark:bg-slate-800 border-b dark:border-slate-700 cursor-pointer">
                     <div id="sidebar-chevron" class="transition-transform duration-300 transform rotate-0">
-                        <svg class="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        <svg class="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"></path></svg>
                     </div>
                 </div>
 
                 <div id="sidebar-scrollable" class="overflow-y-auto flex-grow h-[45vh] md:h-auto">
+                    <div class="p-5 space-y-4 border-b border-slate-100 dark:border-slate-800 bg-indigo-50/50 dark:bg-indigo-900/10">
+                        <label class="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">Smart Navigator</label>
+                        
+                        <div class="space-y-2">
+                            <input id="nav-destination" type="text" placeholder="Where to?" 
+                                class="w-full p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold outline-none focus:ring-2 ring-indigo-500 dark:text-white">
+                            
+                            <select id="vehicle-type" onchange="toggleEbikeSettings()" 
+                                class="w-full p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold outline-none dark:text-white">
+                                <option value="car">🚗 Car (Main Roads)</option>
+                                <option value="bike">🚲 Normal Bike (Cycle Paths)</option>
+                                <option value="escooter">🛴 E-Scooter (Avoid Busy Roads)</option>
+                                <option value="ebike">⚡ E-Bike (High Speed)</option>
+                            </select>
+
+                            <div id="ebike-settings" class="hidden animate-fade-in">
+                                <label class="text-[9px] font-bold text-slate-500 uppercase ml-1">Max Assist Speed (MPH)</label>
+                                <select id="ebike-speed" class="w-full p-2 mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold dark:text-white">
+                                    <option value="15">Up to 15 mph (Class 1)</option>
+                                    <option value="20">Up to 20 mph (Class 2)</option>
+                                    <option value="28">Up to 28 mph (Class 3)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <button onclick="calculateSmartRoute()" class="w-full bg-slate-900 dark:bg-indigo-500 text-white py-3 rounded-xl font-black uppercase tracking-widest text-[10px] shadow-lg transition-all hover:scale-[1.02]">
+                            Generate Road Route
+                        </button>
+                    </div>
+
                     <div class="p-5 space-y-4">
-                        <button onclick="openTripPlanner()" id="new-route-btn" class="w-full bg-indigo-600 text-white py-4 rounded-2xl hover:bg-indigo-500 font-black uppercase tracking-widest text-xs shadow-lg transition-all">
-                            + Plan New Trip
+                        <button id="new-route-btn" class="w-full bg-indigo-600 text-white py-4 rounded-2xl hover:bg-indigo-500 font-black uppercase tracking-widest text-xs shadow-lg transition-all">
+                            + Draw Custom Route
                         </button>
                         
                         <div id="active-controls" class="hidden space-y-2">
-                            <div class="bg-indigo-50 dark:bg-slate-800 border-2 border-indigo-100 dark:border-indigo-900/30 p-4 rounded-2xl flex flex-col gap-3">
-                                <span id="point-count" class="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase">0.00 Mi</span>
+                            <div class="bg-indigo-50 dark:bg-slate-800 border-2 border-indigo-100 dark:border-indigo-900/30 p-4 rounded-2xl">
+                                <span id="point-count" class="text-[10px] font-black text-indigo-600 uppercase block mb-3">0.00 Mi Total</span>
                                 <div class="grid grid-cols-2 gap-2">
                                     <button id="end-route-btn" class="bg-emerald-500 text-white py-3 rounded-xl font-black text-[10px] uppercase">Save</button>
-                                    <button id="cancel-draft-btn" class="bg-white dark:bg-slate-700 text-rose-500 py-3 rounded-xl font-black text-[10px] uppercase">Cancel</button>
+                                    <button id="cancel-draft-btn" class="bg-white dark:bg-slate-700 text-rose-500 py-3 rounded-xl font-black text-[10px] uppercase border">Cancel</button>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl flex items-center justify-between">
-                            <div class="flex items-center gap-3">
-                                <div id="tracking-status" class="w-2 h-2 rounded-full bg-slate-300"></div>
-                                <span id="gps-label" class="text-[9px] font-black text-slate-400 uppercase">Standby</span>
-                            </div>
-                            <button onclick="recenter()" class="text-indigo-600 font-black text-[9px] uppercase">Recenter</button>
-                        </div>
-                    </div>
-
-                    <div class="p-5 pb-20">
-                        <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Saved Paths</h3>
-                        <div id="saved-routes-list" class="space-y-3"></div>
+                        <div id="saved-routes-list" class="space-y-3 pt-4"></div>
                     </div>
                 </div>
             </div>
 
             <div id="map-area" class="flex-grow relative">
                 <div id="map"></div>
+                <button onclick="recenter()" id="floating-locate" class="absolute bottom-6 right-6 md:hidden z-[1000] bg-white dark:bg-slate-800 w-14 h-14 rounded-full shadow-2xl border text-indigo-600 flex items-center justify-center">
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"></path></svg>
+                </button>
             </div>
         </main>
     </div>
 
     <script>
+        // Existing State
         let map, polyline, markers = [], routePath = [];
         let isDrawing = false, userMarker = null, searchMarker = null;
         let savedRoutes = JSON.parse(localStorage.getItem('saved_routes')) || [];
-        let lastKnownPos = null, activeViewLine = null;
-        let isDriving = false, currentDriveRoute = null;
-        let currentVehicle = 'car', ebikeMaxSpeed = 20;
+        let lastKnownPos = null;
+        let activeViewLine = null;
+        let isDriving = false;
+        let currentDriveRoute = null;
         let userHeading = 0;
+        let currentMode = 'desktop';
+        let initialRecenterDone = false;
 
-        // MODAL LOGIC
-        function openTripPlanner() { document.getElementById('trip-planner-modal').classList.remove('hidden'); }
-        function closeTripPlanner() { document.getElementById('trip-planner-modal').classList.add('hidden'); }
-        function toggleEbikeOptions() {
-            const type = document.getElementById('vehicle-type').value;
-            document.getElementById('ebike-speed-box').classList.toggle('hidden', type !== 'ebike');
+        // --- NEW INTEGRATED FUNCTIONS ---
+
+        function toggleEbikeSettings() {
+            const vehicle = document.getElementById('vehicle-type').value;
+            const ebikeDiv = document.getElementById('ebike-settings');
+            ebikeDiv.classList.toggle('hidden', vehicle !== 'ebike');
         }
 
-        // SMART ROUTING START
-        function startSmartRouting() {
-            if (!lastKnownPos) { alert("Wait for GPS signal..."); return; }
-            currentVehicle = document.getElementById('vehicle-type').value;
-            ebikeMaxSpeed = document.getElementById('ebike-speed').value;
-            closeTripPlanner();
-            
-            isDrawing = true;
-            routePath = [];
-            markers.forEach(m => map.removeLayer(m));
-            markers = [];
-            polyline.setLatLngs([]);
-            
-            document.getElementById('new-route-btn').classList.add('hidden');
-            document.getElementById('active-controls').classList.remove('hidden');
-            alert("Click your destination on the map. I'll stick to the roads!");
-        }
+        async function calculateSmartRoute() {
+            const destinationQuery = document.getElementById('nav-destination').value;
+            const vehicle = document.getElementById('vehicle-type').value;
+            const ebikeSpeed = document.getElementById('ebike-speed').value;
 
-        const searchPinIcon = L.divIcon({
-            className: 'search-pin-wrapper',
-            html: `<div class="search-pin-drop"><svg class="w-8 h-8 text-rose-600" fill="currentColor" viewBox="0 0 20 20"><path d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"/></svg></div>`,
-            iconSize: [32, 32], iconAnchor: [16, 32]
-        });
-
-        function initMap(mode) {
-            map = L.map('map', { zoomControl: mode === 'desktop', attributionControl: false }).setView([40.7128, -74.006], 13);
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { className: 'map-tile-light' }).addTo(map);
-            
-            polyline = L.polyline([], { color: '#6366f1', weight: 5 }).addTo(map);
-            userMarker = L.marker([0,0], { icon: L.divIcon({ className: 'custom-icon', html: `<div id="marker-orient"><div class="user-direction-arrow"></div><div class="pulse-ring"></div><div class="user-location-marker" style="width:14px;height:14px;"></div></div>`, iconSize:[14,14], iconAnchor:[7,7] })}).addTo(map);
-
-            if ("geolocation" in navigator) {
-                navigator.geolocation.watchPosition((pos) => {
-                    const latlng = [pos.coords.latitude, pos.coords.longitude];
-                    lastKnownPos = latlng;
-                    userMarker.setLatLng(latlng);
-                    document.getElementById('tracking-status').className = "w-2 h-2 rounded-full bg-emerald-500";
-                    document.getElementById('gps-label').innerText = "Live GPS";
-                    if (isDriving) { map.panTo(latlng); updateHUD(); }
-                }, null, { enableHighAccuracy: true });
+            if (!destinationQuery || !lastKnownPos) {
+                alert("Please enter a destination and ensure GPS is active.");
+                return;
             }
 
-            // SMART ROAD ROUTING ON CLICK
-            map.on('click', async (e) => {
-                if (!isDrawing) return;
+            try {
+                // 1. Geocode
+                const geoRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(destinationQuery)}`);
+                const geoData = await geoRes.json();
+                if (geoData.length === 0) throw new Error("Place not found");
                 
-                const start = lastKnownPos;
-                const end = [e.latlng.lat, e.latlng.lng];
-                
-                // Vehicle Profile Logic
-                const profile = (currentVehicle === 'car') ? 'driving' : 'cycling';
-                
-                try {
-                    const url = `https://router.project-osrm.org/route/v1/${profile}/${start[1]},${start[0]};${end[1]},${end[0]}?overview=full&geometries=geojson`;
-                    const resp = await fetch(url);
-                    const data = await resp.json();
+                const destCoords = [geoData[0].lon, geoData[0].lat];
+                const startCoords = [lastKnownPos[1], lastKnownPos[0]];
 
-                    if (data.code === 'Ok') {
-                        const coords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
-                        routePath = coords;
-                        polyline.setLatLngs(routePath);
-                        
-                        markers.forEach(m => map.removeLayer(m));
-                        const m = L.marker(end, { icon: searchPinIcon }).addTo(map);
-                        markers.push(m);
-                        
-                        const dist = (data.routes[0].distance * 0.000621371).toFixed(2);
-                        document.getElementById('point-count').innerText = dist + " Mi (On Roads)";
-                    }
-                } catch (err) { alert("Routing error! Make sure you clicked near a road."); }
-            });
+                // 2. Profile Logic
+                let profile = 'car'; 
+                if (vehicle === 'bike' || vehicle === 'escooter') profile = 'bike';
+                if (vehicle === 'ebike' && ebikeSpeed < 25) profile = 'bike';
+
+                // 3. OSRM Fetch
+                const routeRes = await fetch(`https://router.project-osrm.org/route/v1/${profile}/${startCoords.join(',')};${destCoords.join(',')}?overview=full&geometries=geojson`);
+                const routeData = await routeRes.json();
+                if (routeData.code !== 'Ok') throw new Error("No road found");
+
+                const points = routeData.routes[0].geometry.coordinates.map(coord => [coord[1], coord[0]]);
+                displaySmartRoute(points, routeData.routes[0].distance);
+
+            } catch (err) {
+                alert("Routing Error: " + err.message);
+            }
         }
 
-        // HUD UPDATES
-        function updateHUD() {
-            if (!isDriving || !currentDriveRoute || !lastKnownPos) return;
-            const distRemaining = calculateRemaining(lastKnownPos, currentDriveRoute.path);
-            document.getElementById('hud-miles').innerText = distRemaining.toFixed(2) + " Mi";
+        function displaySmartRoute(points, distanceMeters) {
+            if (activeViewLine) map.removeLayer(activeViewLine);
             
-            let speed = 10;
-            if (currentVehicle === 'ebike') speed = ebikeMaxSpeed;
-            else if (currentVehicle === 'car') speed = 30;
-            else if (currentVehicle === 'escooter') speed = 15;
+            routePath = points;
+            const miles = (distanceMeters * 0.000621371).toFixed(2);
+            
+            activeViewLine = L.polyline(points, {
+                color: '#4f46e5',
+                weight: 6,
+                opacity: 0.9,
+                lineJoin: 'round'
+            }).addTo(map);
 
-            const timeMins = Math.max(1, Math.round((distRemaining / speed) * 60));
-            document.getElementById('hud-time-bike').innerText = timeMins + "m";
+            map.fitBounds(activeViewLine.getBounds(), { padding: [50, 50] });
+            
+            document.getElementById('modal-dist').innerText = `Total Road Distance: ${miles} miles`;
+            document.getElementById('name-modal').classList.remove('hidden');
+            document.getElementById('route-name-input').value = document.getElementById('nav-destination').value;
         }
 
-        function calculateRemaining(pos, path) {
-            let total = 0;
-            for(let i=0; i<path.length-1; i++) total += L.latLng(path[i]).distanceTo(L.latLng(path[i+1]));
-            return total * 0.000621371;
-        }
+        // --- END NEW FUNCTIONS ---
 
-        // BOOT SEQUENCE
+        // Map Initialization & Core Logic (Standard from your file)
         window.onload = () => {
-            let p = 0;
+            let prog = 0;
+            const bar = document.getElementById('boot-progress');
             const interval = setInterval(() => {
-                p += 20;
-                document.getElementById('boot-progress').style.width = p + '%';
-                if(p >= 100) { clearInterval(interval); showSelection(); }
+                prog += 20;
+                bar.style.width = prog + '%';
+                if(prog >= 100) { clearInterval(interval); showSelection(); }
             }, 100);
         };
 
         function showSelection() {
             document.getElementById('boot-screen').classList.add('hidden');
-            const sel = document.getElementById('selection-screen');
-            sel.classList.remove('hidden');
-            setTimeout(() => sel.classList.remove('opacity-0'), 50);
+            const selection = document.getElementById('selection-screen');
+            selection.classList.remove('hidden');
+            setTimeout(() => selection.classList.remove('opacity-0'), 50);
         }
 
         function selectMode(mode) {
+            currentMode = mode;
             document.getElementById('selection-screen').classList.add('hidden');
+            document.getElementById('loading-screen').classList.remove('hidden');
             document.body.className += ` mode-${mode}`;
-            document.getElementById('app-interface').classList.remove('opacity-0', 'pointer-events-none');
-            initMap(mode);
-            updateSavedList();
+            setTimeout(() => {
+                document.getElementById('loading-screen').classList.add('hidden');
+                document.getElementById('app-interface').classList.remove('opacity-0', 'pointer-events-none');
+                initMap(mode);
+                updateSavedList();
+            }, 1000);
         }
 
-        function recenter() { if(lastKnownPos) map.flyTo(lastKnownPos, 16); }
+        function initMap(mode) {
+            map = L.map('map', { zoomControl: mode === 'desktop', attributionControl: false }).setView([40.7128, -74.0060], 13);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(map);
+            polyline = L.polyline([], { color: '#6366f1', weight: 4 }).addTo(map);
+            
+            const customIcon = L.divIcon({
+                className: 'user-marker',
+                html: `<div id="marker-orient"><div class="pulse-ring"></div><div class="user-location-marker" style="width:14px;height:14px"></div></div>`,
+                iconSize: [14, 14], iconAnchor: [7, 7]
+            });
+            userMarker = L.marker([40.7128, -74.0060], { icon: customIcon }).addTo(map);
 
-        document.getElementById('cancel-draft-btn').onclick = () => {
-            isDrawing = false;
-            markers.forEach(m => map.removeLayer(m));
-            polyline.setLatLngs([]);
-            document.getElementById('new-route-btn').classList.remove('hidden');
-            document.getElementById('active-controls').classList.add('hidden');
-        };
+            if ("geolocation" in navigator) {
+                navigator.geolocation.watchPosition(pos => {
+                    const latlng = [pos.coords.latitude, pos.coords.longitude];
+                    lastKnownPos = latlng;
+                    userMarker.setLatLng(latlng);
+                    if (!initialRecenterDone) { map.setView(latlng, 15); initialRecenterDone = true; }
+                }, null, { enableHighAccuracy: true });
+            }
 
-        document.getElementById('end-route-btn').onclick = () => {
-            if (routePath.length < 2) return;
-            document.getElementById('modal-dist').innerText = `Dist: ${document.getElementById('point-count').innerText}`;
-            document.getElementById('name-modal').classList.remove('hidden');
-        };
+            map.on('click', (e) => {
+                if (!isDrawing) return;
+                routePath.push([e.latlng.lat, e.latlng.lng]);
+                polyline.setLatLngs(routePath);
+                const m = L.circleMarker(e.latlng, { radius: 6, color: '#6366f1', fillColor: 'white', fillOpacity: 1 }).addTo(map);
+                markers.push(m);
+            });
+        }
 
-        document.getElementById('confirm-save-btn').onclick = () => {
-            const name = document.getElementById('route-name-input').value || "New Trip";
-            savedRoutes.push({ id: Date.now(), name, path: routePath, distance: document.getElementById('point-count').innerText, date: new Date().toLocaleDateString() });
-            localStorage.setItem('saved_routes', JSON.stringify(savedRoutes));
-            updateSavedList();
-            document.getElementById('name-modal').classList.add('hidden');
-            document.getElementById('cancel-draft-btn').click();
-        };
+        function updateSavedList() {
+            const list = document.getElementById('saved-routes-list');
+            list.innerHTML = "";
+            savedRoutes.forEach(r => {
+                const div = document.createElement('div');
+                div.className = "bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border dark:border-slate-800";
+                div.innerHTML = `
+                    <h4 class="text-xs font-black uppercase dark:text-white">${r.name}</h4>
+                    <p class="text-[9px] font-bold text-slate-400">${r.distance} Mi</p>
+                    <div class="flex gap-2 mt-2">
+                        <button onclick="viewRoute(${r.id})" class="flex-grow bg-white dark:bg-slate-700 py-2 rounded-xl text-[9px] font-black uppercase border dark:text-white">View</button>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+        }
 
         window.viewRoute = (id) => {
             const r = savedRoutes.find(x => x.id === id);
@@ -349,36 +470,27 @@
             map.fitBounds(activeViewLine.getBounds());
         };
 
-        window.enterDriveMode = (id) => {
-            const r = savedRoutes.find(x => x.id === id);
-            currentDriveRoute = r;
-            isDriving = true;
-            document.getElementById('drive-hud').classList.remove('hidden');
-            viewRoute(id);
+        function toggleSidebarCollapse() {
+            document.getElementById('sidebar').classList.toggle('is-collapsed');
+        }
+
+        function recenter() { if(lastKnownPos) map.flyTo(lastKnownPos, 15); }
+
+        document.getElementById('new-route-btn').onclick = () => {
+            isDrawing = true;
+            routePath = [];
+            document.getElementById('new-route-btn').classList.add('hidden');
+            document.getElementById('active-controls').classList.remove('hidden');
         };
 
-        function exitDriveMode() { 
-            isDriving = false; 
-            document.getElementById('drive-hud').classList.add('hidden'); 
-            if(activeViewLine) map.removeLayer(activeViewLine);
-        }
-
-        function updateSavedList() {
-            const list = document.getElementById('saved-routes-list');
-            list.innerHTML = "";
-            [...savedRoutes].reverse().forEach(r => {
-                const div = document.createElement('div');
-                div.className = "bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800";
-                div.innerHTML = `
-                    <h4 class="text-xs font-black uppercase dark:text-white">${r.name}</h4>
-                    <p class="text-[9px] font-bold text-slate-400">${r.distance}</p>
-                    <div class="flex gap-2 mt-3">
-                        <button onclick="viewRoute(${r.id})" class="flex-grow bg-white dark:bg-slate-700 py-2 rounded-xl text-[9px] font-black uppercase">View</button>
-                        <button onclick="enterDriveMode(${r.id})" class="flex-grow bg-indigo-600 text-white py-2 rounded-xl text-[9px] font-black uppercase">Go</button>
-                    </div>`;
-                list.appendChild(div);
-            });
-        }
+        document.getElementById('confirm-save-btn').onclick = () => {
+            const name = document.getElementById('route-name-input').value || "Unnamed Route";
+            savedRoutes.push({ id: Date.now(), name, distance: (routePath.length * 0.1).toFixed(2), path: routePath });
+            localStorage.setItem('saved_routes', JSON.stringify(savedRoutes));
+            updateSavedList();
+            document.getElementById('name-modal').classList.add('hidden');
+            location.reload(); // Refresh to clear draft state
+        };
     </script>
 </body>
 </html>
