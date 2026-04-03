@@ -338,6 +338,7 @@
         let savedRoutes = JSON.parse(localStorage.getItem('saved_routes')) || [];
         let lastKnownPos = null; 
         let activeViewLine = null;
+        let traversedLine = null; // Variable for the "Already driven" path
         let isDriving = false;
         let currentDriveRoute = null;
         let currentTheme = localStorage.getItem('theme') || 'light';
@@ -440,7 +441,9 @@
             currentDriveRoute = null;
             document.getElementById('drive-hud').classList.add('hidden');
             if (activeViewLine) map.removeLayer(activeViewLine);
+            if (traversedLine) map.removeLayer(traversedLine);
             activeViewLine = null;
+            traversedLine = null;
         }
 
         function updateHUD() {
@@ -456,39 +459,43 @@
             document.getElementById('hud-time-walk').innerText = walkMins + "m";
         }
 
-        function getDistanceToPolyline(latlng, polylinePoints) {
-            let minDistance = Infinity;
-            for (let i = 0; i < polylinePoints.length - 1; i++) {
-                const p1 = L.latLng(polylinePoints[i]);
-                const p2 = L.latLng(polylinePoints[i+1]);
-                const distance = L.LineUtil.pointToSegmentDistance(
-                    map.latLngToLayerPoint(latlng),
-                    map.latLngToLayerPoint(p1),
-                    map.latLngToLayerPoint(p2)
-                );
-                const meters = latlng.distanceTo(p1); 
-                if (meters < minDistance) minDistance = meters;
-            }
-            return minDistance;
-        }
-
         function updateLocation(latlng) {
             lastKnownPos = latlng;
             if (userMarker) userMarker.setLatLng(latlng);
             
-            // --- REROUTE LOGIC ---
-            if (isDriving && currentDriveRoute && document.getElementById('auto-reroute').checked) {
-                let nearestDist = Infinity;
-                currentDriveRoute.path.forEach(pt => {
+            // --- BREADCRUMB / COLOR CHANGE LOGIC ---
+            if (isDriving && currentDriveRoute && activeViewLine) {
+                const fullPath = currentDriveRoute.path;
+                let nearestIdx = 0;
+                let minDist = Infinity;
+
+                // Find the index of the route point closest to user's GPS
+                fullPath.forEach((pt, idx) => {
                     const d = L.latLng(latlng).distanceTo(L.latLng(pt));
-                    if (d < nearestDist) nearestDist = d;
+                    if (d < minDist) {
+                        minDist = d;
+                        nearestIdx = idx;
+                    }
                 });
 
-                if (nearestDist > OFF_ROUTE_THRESHOLD) {
-                    console.log("Off route detected! Recalculating...");
-                    if (currentDestinationQuery) {
-                        calculateSmartRoute(true);
-                    }
+                // Split path into passed (behind) and remaining (ahead)
+                const passedPath = fullPath.slice(0, nearestIdx + 1);
+                const remainingPath = fullPath.slice(nearestIdx);
+
+                // Update or Create the Traversed Line (Gray Color)
+                if (!traversedLine) {
+                    traversedLine = L.polyline(passedPath, { color: '#94a3b8', weight: 6, opacity: 0.6 }).addTo(map);
+                } else {
+                    traversedLine.setLatLngs(passedPath);
+                }
+
+                // Update the remaining line (Individually driven purple/pink line)
+                activeViewLine.setLatLngs(remainingPath);
+
+                // --- REROUTE LOGIC ---
+                if (document.getElementById('auto-reroute').checked && minDist > OFF_ROUTE_THRESHOLD) {
+                    console.log("Off route! Recalculating...");
+                    if (currentDestinationQuery) calculateSmartRoute(true);
                 }
             }
 
@@ -661,8 +668,6 @@
             document.getElementById('name-modal').classList.remove('hidden');
         };
 
-        document.getElementById('close-modal-btn').onclick = () => document.getElementById('name-modal').classList.add('hidden');
-
         document.getElementById('confirm-save-btn').onclick = () => {
             const name = document.getElementById('route-name-input').value || "Unnamed Route";
             const newRoute = { id: Date.now(), name, distance: calculateDistance(routePath), path: routePath, date: new Date().toLocaleDateString() };
@@ -681,12 +686,15 @@
             localStorage.setItem('saved_routes', JSON.stringify(savedRoutes));
             updateSavedList();
             if (activeViewLine) map.removeLayer(activeViewLine);
+            if (traversedLine) map.removeLayer(traversedLine);
         };
 
         window.viewRoute = (id) => {
             const r = savedRoutes.find(x => x.id === id);
             if (!r) return;
             if (activeViewLine) map.removeLayer(activeViewLine);
+            if (traversedLine) map.removeLayer(traversedLine);
+            traversedLine = null;
             activeViewLine = L.polyline(r.path, { color: '#db2777', weight: 6, opacity: 0.8 }).addTo(map);
             map.fitBounds(activeViewLine.getBounds(), { padding: [50, 50] });
         };
@@ -833,6 +841,9 @@
 
         function displayRoute(coords, distanceMeters, destQuery) {
             if (activeViewLine) map.removeLayer(activeViewLine);
+            if (traversedLine) map.removeLayer(traversedLine);
+            traversedLine = null;
+            
             activeViewLine = L.polyline(coords, { color: '#4f46e5', weight: 6, opacity: 0.8 }).addTo(map);
             map.fitBounds(activeViewLine.getBounds(), { padding: [50, 50] });
 
