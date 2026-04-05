@@ -94,18 +94,14 @@
     </div>
 
     <div id="nav-modal" class="fixed inset-0 z-[2000] hidden flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-md">
-        <div class="bg-white dark:bg-slate-800 w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl space-y-6 border border-slate-200 dark:border-slate-700 max-h-[90vh] overflow-y-auto">
+        <div class="bg-white dark:bg-slate-800 w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl space-y-6 border border-slate-200 dark:border-slate-700">
             <div class="text-center">
                 <h3 class="text-2xl font-black italic uppercase tracking-tighter dark:text-white">Quick Navigate</h3>
                 <p class="text-[10px] text-indigo-500 font-bold uppercase tracking-widest">Select your destination and ride</p>
             </div>
             <div class="space-y-4">
-                <div class="relative">
-                    <input id="nav-destination" type="text" placeholder="Where to? (Address or City)" 
-                        class="w-full p-4 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-bold outline-none focus:ring-2 ring-indigo-500 dark:text-white">
-                    <div id="search-results-list" class="hidden absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl z-[2100] overflow-hidden">
-                    </div>
-                </div>
+                <input id="nav-destination" type="text" placeholder="Where to? (Address or City)" 
+                    class="w-full p-4 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-bold outline-none focus:ring-2 ring-indigo-500 dark:text-white">
                 
                 <div class="flex items-center justify-between p-4 bg-indigo-50 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-900/30 rounded-2xl">
                     <div class="flex flex-col">
@@ -736,10 +732,7 @@
 
         // --- QUICK NAV LOGIC ---
         function openNavModal() { document.getElementById('nav-modal').classList.remove('hidden'); }
-        function closeNavModal() { 
-            document.getElementById('nav-modal').classList.add('hidden'); 
-            document.getElementById('search-results-list').classList.add('hidden');
-        }
+        function closeNavModal() { document.getElementById('nav-modal').classList.add('hidden'); }
 
         function selectVehicle(type) {
             selectedVehicle = type;
@@ -749,71 +742,28 @@
             type === 'ebike' ? ebikeDiv.classList.remove('hidden') : ebikeDiv.classList.add('hidden');
         }
 
-        // --- COMBINED SMART SEARCH & ROUTE LOGIC ---
         async function calculateSmartRoute(isReroute = false) {
-            const query = document.getElementById('nav-destination').value;
-            if (!query) return;
-
-            // Use biased searching logic
-            const center = map.getCenter();
-            const lat = center.lat;
-            const lon = center.lng;
-            const offset = 0.5;
-            const viewbox = `${lon-offset},${lat+offset},${lon+offset},${lat-offset}`;
-
-            const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&viewbox=${viewbox}&bounded=0&limit=5`;
+            const destInput = document.getElementById('nav-destination').value;
+            const destQuery = isReroute ? currentDestinationQuery : destInput;
+            const preferTrails = document.getElementById('prefer-trails').checked; 
+            
+            if (!destQuery || !lastKnownPos) return;
+            currentDestinationQuery = destQuery;
 
             try {
-                const response = await fetch(url);
-                const results = await response.json();
+                const destRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(destQuery)}`);
+                const destData = await destRes.json();
+                if (!destData.length) return alert("Destination not found.");
+                const destCoords = [parseFloat(destData[0].lon), parseFloat(destData[0].lat)];
+                const startCoords = [lastKnownPos.lng, lastKnownPos.lat];
 
-                if (results.length > 1 && !isReroute) {
-                    renderLocationOptions(results);
-                } else if (results.length >= 1) {
-                    startRoutingTo(results[0].lat, results[0].lon, results[0].display_name);
-                } else {
-                    alert("No locations found.");
-                }
-            } catch (error) {
-                console.error("Search failed", error);
-            }
-        }
-
-        function renderLocationOptions(results) {
-            const container = document.getElementById('search-results-list');
-            container.innerHTML = "";
-            container.classList.remove('hidden');
-
-            results.forEach(res => {
-                const item = document.createElement('div');
-                item.className = "p-4 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer border-b border-slate-100 dark:border-slate-800 last:border-0 transition-colors";
-                item.innerHTML = `
-                    <p class="text-[10px] font-black uppercase dark:text-white truncate">${res.display_name.split(',')[0]}</p>
-                    <p class="text-[8px] text-slate-400 truncate uppercase mt-0.5">${res.display_name}</p>
-                `;
-                item.onclick = () => {
-                    document.getElementById('nav-destination').value = res.display_name.split(',')[0];
-                    container.classList.add('hidden');
-                    startRoutingTo(res.lat, res.lon, res.display_name);
-                };
-                container.appendChild(item);
-            });
-        }
-
-        async function startRoutingTo(lat, lon, displayName) {
-            const destCoords = [parseFloat(lon), parseFloat(lat)];
-            const startCoords = [lastKnownPos.lng, lastKnownPos.lat];
-            const preferTrails = document.getElementById('prefer-trails').checked;
-            currentDestinationQuery = displayName;
-
-            try {
                 if (preferTrails) {
-                    return calculateOSRMFallback(startCoords, destCoords, displayName);
+                    return calculateOSRMFallback(startCoords, destCoords, destQuery);
                 }
 
-                let travelMode = 'BICYCLE';
+                let travelMode = 'BICYCLE'; 
                 let routeModifiers = { avoidHighways: true, avoidTolls: true, avoidIndoor: true };
-
+                
                 if (selectedVehicle === 'car') {
                     travelMode = 'DRIVE';
                     routeModifiers.avoidHighways = false;
@@ -841,16 +791,16 @@
 
                 const data = await response.json();
                 if (!data.routes || data.routes.length === 0) {
-                    return calculateOSRMFallback(startCoords, destCoords, displayName);
+                    return calculateOSRMFallback(startCoords, destCoords, destQuery);
                 }
 
                 const route = data.routes[0];
                 const coords = decodeGooglePolyline(route.polyline.encodedPolyline);
-                displayRoute(coords, route.distanceMeters, displayName);
+                displayRoute(coords, route.distanceMeters, destQuery);
 
             } catch (err) {
                 console.error("Routing Error:", err);
-                calculateOSRMFallback(startCoords, destCoords, displayName);
+                calculateOSRMFallback([lastKnownPos.lng, lastKnownPos.lat], null, destQuery);
             }
         }
 
@@ -861,6 +811,12 @@
             if (preferTrails && selectedVehicle !== 'car') profile = 'foot'; 
 
             try {
+                if(!destCoords) {
+                    const destRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(destQuery)}`);
+                    const destData = await destRes.json();
+                    destCoords = [parseFloat(destData[0].lon), parseFloat(destData[0].lat)];
+                }
+
                 const routeRes = await fetch(`https://router.project-osrm.org/route/v1/${profile}/${startCoords.join(',')};${destCoords.join(',')}?overview=full&geometries=geojson&steps=true`);
                 const routeData = await routeRes.json();
                 
